@@ -9,7 +9,7 @@
           "date_format":     "Time Format (strftime, e.g. %H:%M)",
           "include_time":    "Include Time in Message Prefix",
           "bold_prefix":     "Bold Message Prefix",
-          "priority_volume":  "Priority Volume (0.0 - 1.0)",
+          "priority_volume": "Priority Volume (0.0 - 1.0)",
           "person_entities": "Person Entities (optional, for presence detection)",
           "dnd_start":       "DND Start (HH:MM)",
           "dnd_end":         "DND End (HH:MM)"
@@ -45,7 +45,7 @@
         "data": {
           "alias":        "Alias (unique name, e.g. notifica_ui)",
           "service":      "Service (domain.service, e.g. notify.persistent_notification)",
-          "target":       "Target entity_id (optional, comma-separated for multiple)",
+          "target":       "Target entity_id or chat_id (optional, comma-separated for multiple)",
           "is_voice":     "Voice Channel (TTS)",
           "alt_services": "Alt Services (JSON dict, optional)",
           "default_media_player": "Default Media Player (optional — fallback for voice channels)"
@@ -82,7 +82,7 @@
           "date_format":     "Time Format (strftime, e.g. %H:%M)",
           "include_time":    "Include Time in Message Prefix",
           "bold_prefix":     "Bold Message Prefix",
-          "priority_volume":  "Priority Volume (0.0 – 1.0)",
+          "priority_volume":  "Priority Volume (0.0 - 1.0)",
           "person_entities": "Person Entities (optional, for presence detection)"
         }
       },

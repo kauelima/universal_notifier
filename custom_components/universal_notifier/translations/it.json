@@ -45,7 +45,7 @@
         "data": {
           "alias":        "Alias (nome univoco, es. notifica_ui)",
           "service":      "Servizio (dominio.servizio, es. notify.persistent_notification)",
-          "target":       "entity_id target (opzionale, separati da virgola per più entità)",
+          "target":       "Entity_id o chat_id target (opzionale, separati da virgola per più entità)",
           "is_voice":     "Canale vocale (TTS)",
           "alt_services": "Servizi alternativi (dizionario JSON opzionale)",
           "default_media_player": "Media Player predefinito (opzionale — fallback per canali vocali)"
