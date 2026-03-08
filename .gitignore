@@ -1,26 +1,10 @@
 # Home Assistant runtime data (generato dal dev container)
-config/.storage/
-config/home-assistant.log
-config/home-assistant.log.1
-config/home-assistant_v2.db
-config/home-assistant_v2.db-shm
-config/home-assistant_v2.db-wal
-config/.HA_VERSION
-config/.ha_run.lock
-config/tts/
-config/.cloud/
-config/deps/
-config/*.*
-config/*
-
+config/
 # Python
 __pycache__/
-*.py[cod]
-*.pyo
-
 # Claude
-.claude/*.*
+.claude/
 #devcontainer
-.devcontainer/*.*
-
-
+.devcontainer/
+# md files
+COMPLETE_GUIDE.md
