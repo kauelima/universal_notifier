@@ -25,6 +25,7 @@ CONF_OVERRIDE_GREETINGS = "override_greetings"
 # --- Chiavi Canale Singolo ---
 CONF_SERVICE = "service"
 CONF_TARGET = "target"
+CONF_CHAT_ID = "chat_id"
 CONF_ENTITY_ID = "entity_id"
 CONF_IS_VOICE = "is_voice"
 CONF_ALT_SERVICES = "alt_services"

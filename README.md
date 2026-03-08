@@ -26,6 +26,20 @@ Trasforma semplici automazioni in un sistema di comunicazione "Smart Home" che c
 * **Do Not Disturb (DND):** Definisci un orario di silenzio per gli assistenti vocali. Le notifiche critiche (`priority: true`) passano comunque.
 * **Saluti Casuali:** "Buongiorno", "Buon pomeriggio", ecc., scelti casualmente da liste personalizzabili.
 * **Gestione Comandi:** Supporto nativo per comandi Companion App (es. `TTS`, `command_volume_level`) inviati in modalità "RAW".
+* **Coda Intelligente (FIFO):** Le notifiche vocali vengono gestite da un worker in background tramite asyncio.Queue. Questo impedisce la sovrapposizione audio riproducendo i messaggi in sequenza.
+* **Snapshot e Ripristino:** Il sistema salva lo stato (volume, traccia e app) dei lettori multimediali prima di una notifica e tenta di ripristinarlo dopo che l'intera coda è stata svuotata.
+
+### 📊 Monitoraggio & Diagnostica
+
+| Entità | Tipo | Descrizione |
+|:---|:---|:---|
+| **Volume** | Sensor | Mostra in tempo reale la percentuale di volume che verrà usata per la prossima notifica, calcolata automaticamente in base alla fascia oraria attiva. Icona dinamica in base al livello. Attributi extra: `current_slot`, `raw_volume`. |
+| **Family** | Sensor | Traccia lo stato di presenza della famiglia (`home` / `not_home`) in base alle entità `person` configurate. |
+| **DND** | Binary Sensor | Indica se la modalità "Non Disturbare" è attualmente attiva o inattiva. |
+| **Voice Buffer** | Number | Tempo di buffer regolabile (0.5–10.0 s, step 0.5) per la riproduzione TTS, per garantire la consegna completa del messaggio. Default: 1.5 s. |
+| **Priority Volume** | Select | Imposta il livello di volume per le notifiche prioritarie. Opzioni: da 0.1 a 1.0. |
+| **Text Format** | Select | Seleziona il formato di testo per le notifiche: `html` o `markdown`. |
+| **Notification Mode** | Select | Controlla l'instradamento delle notifiche in base alla presenza: `Normal` (tutte passano), `Voice home` (voce solo se in casa), `Text home` (solo testo, niente voce). |
 
 ___
 
@@ -43,12 +57,20 @@ It transforms simple automations into a "Smart Home" communication system that k
 * **Random Greetings:** "Good morning," "Good afternoon," etc., chosen randomly from customizable lists.
 * **Command Handling:** Native support for Companion App commands (e.g., `TTS`, `command_volume_level`) sent in "RAW" mode.
 * **Intelligent Queueing (FIFO):** Voice notifications are handled by a background worker using asyncio.Queue. This prevents audio overlapping by playing messages sequentially.
-* **Snapshot & Resume** 2.0**: The system saves the state (volume, track, and app) of media players before a notification and tries to restore it after the entire queue is empty.
+* **Snapshot & Resume:** The system saves the state (volume, track, and app) of media players before a notification and tries to restore it after the entire queue is empty.
 
-📊 Monitoring & Diagnostics
+### 📊 Monitoring & Diagnostics
 
-* **Dynamic Volume Sensor**: A real-time sensor that displays the exact volume percentage to be used for the next notification, automatically calculated based on the current active time slot.
-* **DND Binary Sensor**: A dedicated entity that clearly indicates whether "Do Not Disturb" mode is currently active or inactive.
+| Entity | Type | Description |
+|:---|:---|:---|
+| **Volume** | Sensor | Real-time sensor showing the exact volume percentage for the next notification, automatically calculated based on the current active time slot. Dynamic icon based on level. Extra attributes: `current_slot`, `raw_volume`. |
+| **Family** | Sensor | Tracks family presence status (`home` / `not_home`) based on configured `person` entities. |
+| **DND** | Binary Sensor | Indicates whether Do Not Disturb mode is currently active or inactive. |
+| **Voice Buffer** | Number | Adjustable buffer time (0.5–10.0 s, step 0.5) for TTS playback to ensure complete message delivery. Default: 1.5 s. |
+| **Priority Volume** | Select | Sets the volume level for priority notifications. Options: 0.1 to 1.0. |
+| **Text Format** | Select | Selects the text formatting mode for notifications: `html` or `markdown`. |
+| **Notification Mode** | Select | Controls notification routing based on presence: `Normal` (all go through), `Voice home` (voice only when home), `Text home` (text only, no voice). |
+
 ___
 
 ## 🛠️ Installation
@@ -141,6 +163,17 @@ After initial setup, go to **Settings > Devices & Services > Universal Notifier 
 - **Greetings** — Customize greetings for each time slot
 - **Channels** — Add or remove notification channels
 
+### Little tips
+- if you forget configured channels, go to `Integrations` - `Universal Notifier` - `Configure` - `Channels` - `Remove channel` 
+- for Telegram photo and video add in channel configuration: 
+```
+{
+  "photo": {"service": "telegram_bot.send_photo"},
+  "video": {"service": "telegram_bot.send_video"}
+}
+```
+
+
 </details>
 
 ## 🎯 Service Field Reference
@@ -217,24 +250,24 @@ How to send to multiple targets.
 ```yaml
 action: universal_notifier.send
 data:
-  message: "Water leak detected in the basement!"
+  message: The washing machine has finished its cycle.
+  title: Laundry Alert
   priority: true
-  targets: 
-    - my_phone
-    - telegram_first
-    - alexa_living_room
-    - gh_kitchen
+  targets:
+    - google_home
+    - telegram_bob
+    - mobile_bob
   target_data:
-    my_phone:
+    google_home:
+      entity_id: media_player.kitchen
+      volume: 0.3
+    mobile_bob:
       image: "https://www.home-assistant.io/images/default-social.png"
       color: red
-      channel: "Motion"
-    telegram_first:
+      channel: "washing-alert"
+    telegram_bob:
       type: photo
       url: "https://www.home-assistant.io/images/default-social.png"
-    google_home_tts:
-      entity_id: media_player.google_nest_hub
-      volume: 0.5
 ```
 
 </details>

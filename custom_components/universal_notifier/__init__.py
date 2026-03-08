@@ -24,7 +24,7 @@ from .const import (
     CONF_PRIORITY, CONF_SKIP_GREETING, CONF_INCLUDE_TIME, CONF_PRIORITY_VOLUME, CONF_OVERRIDE_GREETINGS,
     CONF_PERSON_ENTITIES,
     # Inner Channel keys
-    CONF_SERVICE, CONF_TARGET, CONF_ENTITY_ID,
+    CONF_SERVICE, CONF_TARGET, CONF_ENTITY_ID, CONF_CHAT_ID,
     CONF_IS_VOICE, CONF_ALT_SERVICES, CONF_TYPE,
     # Other
     COMPANION_COMMANDS,
@@ -422,6 +422,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if conf_target_value:
                 if srv_domain == "tts":
                     service_payload[ATTR_ENTITY_ID] = conf_target_value
+                elif srv_domain == "telegram_bot":
+                    service_payload[CONF_CHAT_ID] = conf_target_value
                 else:
                     service_payload[CONF_TARGET] = conf_target_value
 
@@ -446,7 +448,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 p = service_payload.copy()
                 notify_targets = channel_conf.get(CONF_TARGET, [])
                 if isinstance(notify_targets, str): notify_targets = [notify_targets]
-                p[CONF_TARGET] = str(notify_targets[0])
+                p[CONF_CHAT_ID] = str(notify_targets[0])
                 _LOGGER.debug(f"UniNotifier: Final payload {p} - Service data {srv_domain}/{srv_name}")
                 tasks.append(hass.services.async_call(srv_domain, srv_name, p))
 
