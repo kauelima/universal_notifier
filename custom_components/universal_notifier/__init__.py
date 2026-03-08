@@ -25,7 +25,7 @@ from .const import (
     CONF_PERSON_ENTITIES,
     # Inner Channel keys
     CONF_SERVICE, CONF_TARGET, CONF_ENTITY_ID, CONF_CHAT_ID,
-    CONF_IS_VOICE, CONF_ALT_SERVICES, CONF_TYPE,
+    CONF_IS_VOICE, CONF_ALT_SERVICES, CONF_TYPE, CONF_DEFAULT_MEDIA_PLAYER,
     # Other
     COMPANION_COMMANDS,
 )
@@ -282,8 +282,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             target_raw_message = specific_data.pop(CONF_MESSAGE, global_raw_message)
 
             dynamic_entities = specific_data.pop(CONF_ENTITY_ID, channel_conf.get(CONF_TARGET))
-            if isinstance(dynamic_entities, str): dynamic_entities = [dynamic_entities]
-            elif dynamic_entities is None: dynamic_entities = []
+            if isinstance(dynamic_entities, str):
+                dynamic_entities = [dynamic_entities]
+            elif dynamic_entities is None:
+                dynamic_entities = []
             _LOGGER.debug(f"UniNotifier: Dynamic Entities {dynamic_entities}")
 
             ####################################################################
@@ -453,18 +455,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 tasks.append(hass.services.async_call(srv_domain, srv_name, p))
 
             elif is_voice_channel:
+                default_mp = channel_conf.get(CONF_DEFAULT_MEDIA_PLAYER, "")
                 if srv_domain == "tts":
-                    if dynamic_entities:
-                        service_payload["media_player_entity_id"] = dynamic_entities
-                        tts_entities = service_payload.get("media_player_entity_id", [])
-                        if isinstance(tts_entities, str):
-                            physical_players.append(tts_entities)
-                        else:
-                            physical_players.extend(tts_entities)
+                    # Per TTS: dynamic_entities contiene il target TTS (tts.xxx),
+                    # media_player_entity_id indica dove riprodurre l'audio
+                    tts_media_players = specific_data.pop("media_player_entity_id", None)
+                    if not tts_media_players and default_mp:
+                        tts_media_players = [default_mp]
+                    if tts_media_players:
+                        if isinstance(tts_media_players, str):
+                            tts_media_players = [tts_media_players]
+                        service_payload["media_player_entity_id"] = tts_media_players
+                        physical_players.extend(tts_media_players)
                 elif srv_domain == "notify":
                     notify_targets = ""
                     if dynamic_entities:
                         notify_targets = dynamic_entities
+                    elif default_mp:
+                        notify_targets = [default_mp]
                     else:
                         notify_targets = channel_conf.get(CONF_TARGET, [])
                     if isinstance(notify_targets, str):

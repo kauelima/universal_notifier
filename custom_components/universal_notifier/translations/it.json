@@ -47,7 +47,8 @@
           "service":      "Servizio (dominio.servizio, es. notify.persistent_notification)",
           "target":       "entity_id target (opzionale, separati da virgola per più entità)",
           "is_voice":     "Canale vocale (TTS)",
-          "alt_services": "Servizi alternativi (dizionario JSON opzionale)"
+          "alt_services": "Servizi alternativi (dizionario JSON opzionale)",
+          "default_media_player": "Media Player predefinito (opzionale — fallback per canali vocali)"
         }
       }
     },
@@ -132,7 +133,8 @@
           "service":      "Servizio (dominio.servizio, es. notify.persistent_notification)",
           "target":       "entity_id target (opzionale, separati da virgola per più entità)",
           "is_voice":     "Canale vocale (applica logica TTS, Non Disturbare e volume)",
-          "alt_services": "Servizi alternativi (dizionario JSON opzionale — per foto/video Telegram ecc.)"
+          "alt_services": "Servizi alternativi (dizionario JSON opzionale — per foto/video Telegram ecc.)",
+          "default_media_player": "Media Player predefinito (opzionale — fallback per canali vocali)"
         }
       },
       "remove_channel": {

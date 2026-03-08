@@ -59,6 +59,7 @@ _TEXT          = TextSelector()
 _BOOL          = BooleanSelector()
 _MULTILINE     = TextSelector(TextSelectorConfig(multiline=True))
 _PERSON_MULTI  = EntitySelector(EntitySelectorConfig(domain="person", multiple=True))
+_MEDIA_PLAYER  = EntitySelector(EntitySelectorConfig(domain="media_player", multiple=False))
 
 
 def _is_valid_time(value: str) -> bool:
@@ -242,6 +243,7 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             "target":       (user_input.get("target") or "").strip(),
                             "is_voice":     user_input.get("is_voice", False),
                             "alt_services": alt_services,
+                            "default_media_player": (user_input.get("default_media_player") or "").strip(),
                         }
                     }
                     await self.async_set_unique_id(DOMAIN)
@@ -253,7 +255,8 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("service"):                     _TEXT,
             vol.Optional("target",       default=""):    _TEXT,
             vol.Optional("is_voice",     default=False): _BOOL,
-            vol.Optional("alt_services", default="{}"):  _MULTILINE,
+            vol.Optional("alt_services", default="{}"):              _MULTILINE,
+            vol.Optional("default_media_player", default=""):          _MEDIA_PLAYER,
         })
         return self.async_show_form(step_id="add_first_channel", data_schema=schema, errors=errors)
 
@@ -416,6 +419,7 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
                         "target":       (user_input.get("target") or "").strip(),
                         "is_voice":     user_input.get("is_voice", False),
                         "alt_services": alt_services,
+                        "default_media_player": (user_input.get("default_media_player") or "").strip(),
                     }
                     self._current_options["channels"] = channels
                     return self._save()
@@ -425,7 +429,8 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
             vol.Required("service"):                     _TEXT,
             vol.Optional("target",       default=""):    _TEXT,
             vol.Optional("is_voice",     default=False): _BOOL,
-            vol.Optional("alt_services", default="{}"):  _MULTILINE,
+            vol.Optional("alt_services", default="{}"):              _MULTILINE,
+            vol.Optional("default_media_player", default=""):          _MEDIA_PLAYER,
         })
         return self.async_show_form(step_id="add_channel", data_schema=schema, errors=errors)
 

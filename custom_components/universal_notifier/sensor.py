@@ -3,7 +3,10 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.util import dt as dt_util
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.core import callback
-from .const import DOMAIN, CONF_TIME_SLOTS, CONF_PERSON_ENTITIES, get_device_info
+from .const import (
+    DOMAIN, CONF_TIME_SLOTS, CONF_PERSON_ENTITIES, CONF_CHANNELS,
+    CONF_IS_VOICE, CONF_DEFAULT_MEDIA_PLAYER, get_device_info,
+)
 from .utils import get_current_slot_info
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
@@ -11,6 +14,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     async_add_entities([
         UNotifierVolumeSensor(conf, entry),
         UNotifierFamilySensor(hass, conf, entry),
+        UNotifierDefaultPlayerSensor(conf, entry),
     ], True)
 
 class UNotifierVolumeSensor(SensorEntity):
@@ -82,3 +86,27 @@ class UNotifierFamilySensor(SensorEntity):
     @callback
     def _handle_change(self, event):
         self.async_write_ha_state()
+
+
+class UNotifierDefaultPlayerSensor(SensorEntity):
+    _attr_has_entity_name = True
+    _attr_name = "Default Media Players"
+    _attr_icon = "mdi:speaker-multiple"
+
+    def __init__(self, conf, entry):
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_default_players"
+        self._attr_device_info = get_device_info(entry.entry_id)
+        channels = conf.get(CONF_CHANNELS, {})
+        self._voice_defaults = {
+            alias: ch.get(CONF_DEFAULT_MEDIA_PLAYER, "")
+            for alias, ch in channels.items()
+            if ch.get(CONF_IS_VOICE, False) and ch.get(CONF_DEFAULT_MEDIA_PLAYER, "")
+        }
+
+    @property
+    def native_value(self):
+        return len(self._voice_defaults)
+
+    @property
+    def extra_state_attributes(self):
+        return self._voice_defaults

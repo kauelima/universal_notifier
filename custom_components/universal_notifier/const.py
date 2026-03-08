@@ -29,6 +29,7 @@ CONF_CHAT_ID = "chat_id"
 CONF_ENTITY_ID = "entity_id"
 CONF_IS_VOICE = "is_voice"
 CONF_ALT_SERVICES = "alt_services"
+CONF_DEFAULT_MEDIA_PLAYER = "default_media_player"
 CONF_TYPE = "type"
 
 # --- Piattaforme HA ---

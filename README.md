@@ -40,6 +40,7 @@ Trasforma semplici automazioni in un sistema di comunicazione "Smart Home" che c
 | **Priority Volume** | Select | Imposta il livello di volume per le notifiche prioritarie. Opzioni: da 0.1 a 1.0. |
 | **Text Format** | Select | Seleziona il formato di testo per le notifiche: `html` o `markdown`. |
 | **Notification Mode** | Select | Controlla l'instradamento delle notifiche in base alla presenza: `Normal` (tutte passano), `Voice home` (voce solo se in casa), `Text home` (solo testo, niente voce). |
+| **Default Media Players** | Sensor | Mostra i media player predefiniti configurati per i canali vocali. Stato: numero di canali con un default. Attributi: mappa `{alias_canale: media_player.xxx}`. |
 
 ___
 
@@ -70,6 +71,7 @@ It transforms simple automations into a "Smart Home" communication system that k
 | **Priority Volume** | Select | Sets the volume level for priority notifications. Options: 0.1 to 1.0. |
 | **Text Format** | Select | Selects the text formatting mode for notifications: `html` or `markdown`. |
 | **Notification Mode** | Select | Controls notification routing based on presence: `Normal` (all go through), `Voice home` (voice only when home), `Text home` (text only, no voice). |
+| **Default Media Players** | Sensor | Shows the default media players configured for voice channels. State: number of channels with a default. Attributes: map `{channel_alias: media_player.xxx}`. |
 
 ___
 
@@ -224,8 +226,7 @@ data:
   skip_greeting: true   # <--- Avoids greetings like "Good night" during an alarm
   targets:
     - alexa_living_room
-    - telegram_bot_media
-    - gh_kitchen
+    - telegram_bob
 ```
 
 #### 3. Companion App Commands (Raw Messages)
