@@ -6,6 +6,7 @@ config/home-assistant_v2.db
 config/home-assistant_v2.db-shm
 config/home-assistant_v2.db-wal
 config/.HA_VERSION
+config/.ha_run.lock
 config/tts/
 config/.cloud/
 config/deps/
@@ -18,5 +19,8 @@ __pycache__/
 *.pyo
 
 # Claude
-.claude/
-config/.ha_run.lock
+.claude/*.*
+#devcontainer
+.devcontainer/*.*
+
+

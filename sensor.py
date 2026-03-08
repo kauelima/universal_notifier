@@ -3,22 +3,25 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.util import dt as dt_util
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.core import callback
-from .const import DOMAIN, CONF_TIME_SLOTS, CONF_PERSON_ENTITIES
+from .const import DOMAIN, CONF_TIME_SLOTS, CONF_PERSON_ENTITIES, get_device_info
 from .utils import get_current_slot_info
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     conf = hass.data[DOMAIN][entry.entry_id]["conf"]
     async_add_entities([
-        UNotifierVolumeSensor(conf),
-        UNotifierFamilySensor(hass, conf),
+        UNotifierVolumeSensor(conf, entry),
+        UNotifierFamilySensor(hass, conf, entry),
     ], True)
 
 class UNotifierVolumeSensor(SensorEntity):
-    def __init__(self, conf):
+    _attr_has_entity_name = True
+    _attr_name = "Volume"
+
+    def __init__(self, conf, entry):
         self._slots = conf.get(CONF_TIME_SLOTS, {})
-        self._attr_name = "Universal Notifier Volume"
-        self._attr_unique_id = f"{DOMAIN}_volume"
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_volume"
         self._attr_native_unit_of_measurement = "%"
+        self._attr_device_info = get_device_info(entry.entry_id)
 
     @property
     def native_value(self):
@@ -50,13 +53,15 @@ class UNotifierVolumeSensor(SensorEntity):
 
 
 class UNotifierFamilySensor(SensorEntity):
-    _attr_name = "Universal Notifier Family"
-    _attr_unique_id = f"{DOMAIN}_family"
+    _attr_has_entity_name = True
+    _attr_name = "Family"
     _attr_icon = "mdi:home-account"
 
-    def __init__(self, hass, conf):
+    def __init__(self, hass, conf, entry):
         self.hass = hass
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_family"
         self._person_entities = conf.get(CONF_PERSON_ENTITIES, [])
+        self._attr_device_info = get_device_info(entry.entry_id)
 
     @property
     def native_value(self) -> str:

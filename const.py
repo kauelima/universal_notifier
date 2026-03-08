@@ -33,6 +33,17 @@ CONF_TYPE = "type"
 # --- Piattaforme HA ---
 PLATFORMS = ["sensor", "binary_sensor", "select", "number"]
 
+
+def get_device_info(entry_id: str):
+    """Device info condiviso da tutte le entità."""
+    from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+    return DeviceInfo(
+        identifiers={(DOMAIN, entry_id)},
+        name="Universal Notifier",
+        manufacturer="Universal Notifier",
+        entry_type=DeviceEntryType.SERVICE,
+    )
+
 # --- Companion App Commands ---
 COMPANION_COMMANDS = [
     "TTS",

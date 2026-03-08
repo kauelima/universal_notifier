@@ -1,6 +1,6 @@
 # /config/custom_components/universal_notifier/select.py
 from homeassistant.components.select import SelectEntity
-from .const import DOMAIN, CONF_PRIORITY_VOLUME
+from .const import DOMAIN, CONF_PRIORITY_VOLUME, get_device_info
 
 async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities([
@@ -10,14 +10,17 @@ async def async_setup_entry(hass, entry, async_add_entities):
     ], True)
 
 class PriorityVolumeSelect(SelectEntity):
+    _attr_has_entity_name = True
+    _attr_name = "Priority Volume"
+
     def __init__(self, hass, entry):
         self.hass = hass
         self._entry_id = entry.entry_id
-        self._attr_name = "Universal Notifier Priority Volume"
-        self._attr_unique_id = f"{DOMAIN}_selector"
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_priority_volume"
         self._attr_options = [str(round(i/10, 1)) for i in range(1, 11)]
         conf = hass.data[DOMAIN][entry.entry_id]["conf"]
         self._attr_current_option = str(conf.get(CONF_PRIORITY_VOLUME, 0.9))
+        self._attr_device_info = get_device_info(entry.entry_id)
 
     async def async_select_option(self, option: str) -> None:
         self.hass.data[DOMAIN][self._entry_id]["runtime_priority_vol"] = float(option)
@@ -26,15 +29,17 @@ class PriorityVolumeSelect(SelectEntity):
 
 
 class TextFormatSelect(SelectEntity):
-    _attr_name = "Universal Notifier Text Format"
-    _attr_unique_id = f"{DOMAIN}_text_format"
+    _attr_has_entity_name = True
+    _attr_name = "Text Format"
     _attr_options = ["html", "markdown"]
     _attr_icon = "mdi:format-text"
 
     def __init__(self, hass, entry):
         self.hass = hass
         self._entry_id = entry.entry_id
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_text_format"
         self._attr_current_option = "html"
+        self._attr_device_info = get_device_info(entry.entry_id)
 
     async def async_select_option(self, option: str) -> None:
         self.hass.data[DOMAIN][self._entry_id]["text_format"] = option
@@ -43,15 +48,17 @@ class TextFormatSelect(SelectEntity):
 
 
 class NotificationModeSelect(SelectEntity):
-    _attr_name = "Universal Notifier Notification Mode"
-    _attr_unique_id = f"{DOMAIN}_notification_mode"
+    _attr_has_entity_name = True
+    _attr_name = "Notification Mode"
     _attr_options = ["Normal", "Voice home", "Text home"]
     _attr_icon = "mdi:home-sound-out"
 
     def __init__(self, hass, entry):
         self.hass = hass
         self._entry_id = entry.entry_id
+        self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_notification_mode"
         self._attr_current_option = "Normal"
+        self._attr_device_info = get_device_info(entry.entry_id)
 
     async def async_select_option(self, option: str) -> None:
         self.hass.data[DOMAIN][self._entry_id]["notification_mode"] = option
