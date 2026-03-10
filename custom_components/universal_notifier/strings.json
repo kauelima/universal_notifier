@@ -131,7 +131,7 @@
         "data": {
           "alias":        "Alias (unique name, e.g. google_home)",
           "service":      "Service (domain.service, e.g. notify.persistent_notification)",
-          "target":       "Target entity_id (optional, comma-separated for multiple)",
+          "target":       "Target entity_id or chat_id (optional, comma-separated for multiple)",
           "is_voice":     "Voice Channel (applies TTS, DND and volume logic)",
           "alt_services": "Alt Services (JSON dict, optional — for Telegram photo/video etc.)",
           "default_media_player": "Default Media Player (optional — fallback for voice channels)"

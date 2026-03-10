@@ -82,7 +82,7 @@
           "date_format":     "Formato orario (strftime, es. %H:%M)",
           "include_time":    "Includi l'orario nel prefisso del messaggio",
           "bold_prefix":     "Prefisso messaggio in grassetto",
-          "priority_volume":  "Volume prioritario (0.0 - 1.0)",
+          "priority_volume": "Volume prioritario (0.0 - 1.0)",
           "person_entities": "Entità persona (opzionale, per rilevamento presenza)"
         }
       },
@@ -131,7 +131,7 @@
         "data": {
           "alias":        "Alias (nome univoco, es. google_home)",
           "service":      "Servizio (dominio.servizio, es. notify.persistent_notification)",
-          "target":       "entity_id target (opzionale, separati da virgola per più entità)",
+          "target":       "Entity_id o chat_id target (opzionale, separati da virgola per più entità)",
           "is_voice":     "Canale vocale (applica logica TTS, Non Disturbare e volume)",
           "alt_services": "Servizi alternativi (dizionario JSON opzionale — per foto/video Telegram ecc.)",
           "default_media_player": "Media Player predefinito (opzionale — fallback per canali vocali)"
