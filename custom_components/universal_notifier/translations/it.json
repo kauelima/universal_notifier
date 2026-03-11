@@ -122,6 +122,7 @@
         "title": "Canali",
         "menu_options": {
           "add_channel":    "Aggiungi canale",
+          "edit_channel":   "Modifica canale",
           "remove_channel": "Rimuovi canale"
         }
       },
@@ -135,6 +136,24 @@
           "is_voice":     "Canale vocale (applica logica TTS, Non Disturbare e volume)",
           "alt_services": "Servizi alternativi (dizionario JSON opzionale — per foto/video Telegram ecc.)",
           "default_media_player": "Media Player predefinito (opzionale — fallback per canali vocali)"
+        }
+      },
+      "edit_channel": {
+        "title": "Modifica canale",
+        "data": {
+          "alias": "Canale da modificare"
+        }
+      },
+      "edit_channel_form": {
+        "title": "Modifica canale",
+        "description": "Modifica il canale selezionato. Puoi anche rinominarlo cambiando l'alias.",
+        "data": {
+          "alias":        "Alias (nome univoco)",
+          "service":      "Servizio (dominio.servizio, es. notify.persistent_notification)",
+          "target":       "Entity_id o chat_id target (opzionale, separati da virgola per più entità)",
+          "is_voice":     "Canale vocale (applica logica TTS, Non Disturbare e volume)",
+          "alt_services": "Servizi alternativi (dizionario JSON opzionale)",
+          "default_media_player": "Media Player predefinito (opzionale)"
         }
       },
       "remove_channel": {

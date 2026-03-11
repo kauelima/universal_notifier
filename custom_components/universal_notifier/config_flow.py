@@ -281,6 +281,8 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
         self._current_options: dict = dict(config_entry.options)
         # Valori effettivi = data + options (options sovrascrivono)
         self._effective: dict = {**config_entry.data, **self._current_options}
+        # Alias del canale in fase di modifica (per edit_channel)
+        self._editing_alias: str | None = None
 
     def _save(self):
         """Return async_create_entry with the full current options dict."""
@@ -381,7 +383,7 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
     async def async_step_channels_menu(self, user_input=None):
         return self.async_show_menu(
             step_id="channels_menu",
-            menu_options=["add_channel", "remove_channel"],
+            menu_options=["add_channel", "edit_channel", "remove_channel"],
         )
 
     # ── Add channel ────────────────────────────────────────────────────────
@@ -433,6 +435,87 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
             vol.Optional("default_media_player", default=[]):  _MEDIA_PLAYER,
         })
         return self.async_show_form(step_id="add_channel", data_schema=schema, errors=errors)
+
+    # ── Edit channel (step 1: select) ─────────────────────────────────────
+
+    async def async_step_edit_channel(self, user_input=None):
+        channels = self._effective.get("channels", {})
+
+        if not channels:
+            return await self.async_step_channels_menu()
+
+        if user_input is not None:
+            self._editing_alias = user_input["alias"]
+            return await self.async_step_edit_channel_form()
+
+        schema = vol.Schema({
+            vol.Required("alias"): SelectSelector(
+                SelectSelectorConfig(
+                    options=list(channels.keys()),
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
+        })
+        return self.async_show_form(step_id="edit_channel", data_schema=schema)
+
+    # ── Edit channel (step 2: form) ─────────────────────────────────────
+
+    async def async_step_edit_channel_form(self, user_input=None):
+        errors = {}
+        channels = dict(self._current_options.get(
+            "channels", self._effective.get("channels", {}),
+        ))
+        old_alias = self._editing_alias
+        ch = channels.get(old_alias, {})
+
+        if user_input is not None:
+            alias   = (user_input.get("alias") or "").strip()
+            service = (user_input.get("service") or "").strip()
+
+            if not alias:
+                errors["alias"] = "required"
+            elif not service:
+                errors["service"] = "required"
+            elif "." not in service:
+                errors["service"] = "invalid_service"
+            else:
+                alt_raw = (user_input.get("alt_services") or "{}").strip()
+                try:
+                    alt_services = json.loads(alt_raw) if alt_raw else {}
+                    if not isinstance(alt_services, dict):
+                        raise ValueError
+                except (json.JSONDecodeError, ValueError):
+                    errors["alt_services"] = "invalid_json"
+                    alt_services = None
+
+                if alt_services is not None:
+                    # Se l'alias è cambiato (rename), rimuovi la vecchia chiave
+                    if alias != old_alias:
+                        channels.pop(old_alias, None)
+                    channels[alias] = {
+                        "service":      service,
+                        "target":       (user_input.get("target") or "").strip(),
+                        "is_voice":     user_input.get("is_voice", False),
+                        "alt_services": alt_services,
+                        "default_media_player": user_input.get("default_media_player", [""])[0] if user_input.get("default_media_player") else "",
+                    }
+                    self._current_options["channels"] = channels
+                    self._editing_alias = None
+                    return self._save()
+
+        # Pre-fill defaults dai valori correnti del canale
+        default_mp = ch.get("default_media_player", "")
+        default_mp_list = [default_mp] if default_mp else []
+
+        schema = vol.Schema({
+            vol.Optional("alias",        default=old_alias):                                        _TEXT,
+            vol.Optional("service",      default=ch.get("service", "")):                            _TEXT,
+            vol.Optional("target",       default=ch.get("target", "")):                             _TEXT,
+            vol.Optional("is_voice",     default=ch.get("is_voice", False)):                        _BOOL,
+            vol.Optional("alt_services", default=json.dumps(ch.get("alt_services", {}), indent=2)): _MULTILINE,
+            vol.Optional("default_media_player", default=default_mp_list):                          _MEDIA_PLAYER,
+        })
+        return self.async_show_form(step_id="edit_channel_form", data_schema=schema, errors=errors)
 
     # ── Remove channel ─────────────────────────────────────────────────────
 
