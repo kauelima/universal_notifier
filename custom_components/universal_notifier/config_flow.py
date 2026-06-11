@@ -151,12 +151,12 @@ def _dual_time_slots_schema(defaults: dict, group: str) -> dict:
     d = _slots_to_fields(defaults, group)
     result = {}
     for slot in SLOT_KEYS:
-        result[f"{group}_{slot}_start"]  = vol.Optional(
+        result[vol.Optional(
             f"{group}_{slot}_start", default=d[f"{group}_{slot}_start"]
-        ): _TEXT
-        result[f"{group}_{slot}_volume"] = vol.Optional(
+        )] = _TEXT
+        result[vol.Optional(
             f"{group}_{slot}_volume", default=d[f"{group}_{slot}_volume"]
-        ): _SLIDER_0_1
+        )] = _SLIDER_0_1
     return result
 
 
