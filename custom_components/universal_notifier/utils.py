@@ -23,14 +23,40 @@ def is_time_in_range(start_str: str, end_str: str, now_time) -> bool:
     else:
         return start <= now_time or now_time <= end
 
-def get_current_slot_info(slots_conf: dict, now_time) -> tuple:
-    """Restituisce (nome_slot, volume) basandosi sull'ora attuale."""
-    # Se la config è vuota, usiamo i default di const.py
+def get_current_slot_info(slots_conf: dict, now_time,
+                          now_weekday: int = None,
+                          weekend_days: list = None) -> tuple:
+    """Restituisce (nome_slot, volume) basandosi sull'ora attuale e giorno."""
+    # Se la config è vuota, usiamo i default
     if not slots_conf:
         slots_conf = DEFAULT_TIME_SLOTS
+
+    # Determine which group to use: weekend vs weekday
+    if (weekend_days is not None and now_weekday is not None
+            and now_weekday in weekend_days):
+        group = slots_conf.get("weekend", slots_conf)
+    else:
+        group = slots_conf.get("weekday", slots_conf)
+
+    # If the selected group is itself flat (old format or fallback),
+    # "weekday" / "weekend" key won't exist, so group = slots_conf (flat dict).
+    # If group is a nested dict with slot keys, use it; otherwise fall back.
+    if not group or not isinstance(group, dict):
+        group = slots_conf
+
+    # Check if group is flat (old format: {"morning": {...}, ...})
+    # vs nested (new format). If the first value is a dict with "start", it's flat.
+    sample_val = next(iter(group.values()), None)
+    if isinstance(sample_val, dict) and "start" in sample_val:
+        working_slots = group
+    else:
+        # Fallback: use the original slots_conf directly (old flat format)
+        working_slots = slots_conf
+
     sorted_slots = []
-    for name, data in slots_conf.items():
-        # Parsing sicuro dell'orario
+    for name, data in working_slots.items():
+        if not isinstance(data, dict):
+            continue
         t_str = data.get("start")
         t_obj = dt_util.parse_time(t_str) if t_str else None
         vol_val = data.get("volume", 0.2)
@@ -39,7 +65,6 @@ def get_current_slot_info(slots_conf: dict, now_time) -> tuple:
     # Ordina per orario di inizio
     sorted_slots.sort(key=lambda x: x[1])
     if not sorted_slots:
-        # Fallback estremo se nessun orario è valido
         return "default", 0.2
     # Logica: Inizializziamo con l'ultimo slot della lista.
     # Questo copre il caso "notte" (es. dalle 23:00 alle 07:00).
@@ -48,7 +73,7 @@ def get_current_slot_info(slots_conf: dict, now_time) -> tuple:
     for name, start_time, vol_val in sorted_slots:
         if now_time >= start_time:
             current_slot = name
-            current_vol = vol_val  
+            current_vol = vol_val
     return current_slot, current_vol
 
 def clean_text_for_tts(text: str) -> str:
