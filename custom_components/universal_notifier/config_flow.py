@@ -204,23 +204,27 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["dnd_end"] = "invalid_time"
             else:
                 self._data.update({
-                    "assistant_name":  user_input["assistant_name"],
-                    "date_format":     user_input["date_format"],
-                    "include_time":    user_input["include_time"],
-                    "bold_prefix":     user_input["bold_prefix"],
-                    "priority_volume": float(user_input["priority_volume"]),
-                    "person_entities": user_input.get("person_entities", []),
+                    "assistant_name":       user_input["assistant_name"],
+                    "date_format":          user_input["date_format"],
+                    "include_time":         user_input["include_time"],
+                    "bold_prefix":          user_input["bold_prefix"],
+                    "ignore_title_voice":   user_input.get("ignore_title_voice", False),
+                    "priority_volume":      float(user_input["priority_volume"]),
+                    "person_entities":      user_input.get("person_entities", []),
+                    "weekend_days":         user_input.get("weekend_days", [5, 6]),
                     "dnd": {"start": dnd_start, "end": dnd_end},
                 })
                 return await self.async_step_time_slots()
 
         schema = vol.Schema({
-            vol.Optional("assistant_name",  default=DEFAULT_ASSISTANT_NAME):  _TEXT,
-            vol.Optional("date_format",     default=DEFAULT_DATE_FORMAT):     _TEXT,
-            vol.Optional("include_time",    default=DEFAULT_INCLUDE_TIME):    _BOOL,
-            vol.Optional("bold_prefix",     default=DEFAULT_BOLD_PREFIX):     _BOOL,
-            vol.Optional("priority_volume", default=DEFAULT_PRIORITY_VOLUME): _SLIDER_0_1,
-            vol.Optional("person_entities", default=[]):                      _PERSON_MULTI,
+            vol.Optional("assistant_name",    default=DEFAULT_ASSISTANT_NAME):      _TEXT,
+            vol.Optional("date_format",       default=DEFAULT_DATE_FORMAT):         _TEXT,
+            vol.Optional("include_time",      default=DEFAULT_INCLUDE_TIME):        _BOOL,
+            vol.Optional("bold_prefix",       default=DEFAULT_BOLD_PREFIX):         _BOOL,
+            vol.Optional("ignore_title_voice",default=DEFAULT_IGNORE_TITLE_VOICE):  _BOOL,
+            vol.Optional("priority_volume",   default=DEFAULT_PRIORITY_VOLUME):     _SLIDER_0_1,
+            vol.Optional("person_entities",   default=[]):                          _PERSON_MULTI,
+            vol.Optional("weekend_days",      default=DEFAULT_WEEKEND_DAYS):        _WEEKDAY_MULTI,
             vol.Optional("dnd_start", default=DEFAULT_DND["start"]): _TEXT,
             vol.Optional("dnd_end",   default=DEFAULT_DND["end"]):   _TEXT,
         })
@@ -349,23 +353,27 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
     async def async_step_global_settings(self, user_input=None):
         if user_input is not None:
             self._current_options.update({
-                "assistant_name":  user_input["assistant_name"],
-                "date_format":     user_input["date_format"],
-                "include_time":    user_input["include_time"],
-                "bold_prefix":     user_input["bold_prefix"],
-                "priority_volume": float(user_input["priority_volume"]),
-                "person_entities": user_input.get("person_entities", []),
+                "assistant_name":       user_input["assistant_name"],
+                "date_format":          user_input["date_format"],
+                "include_time":         user_input["include_time"],
+                "bold_prefix":          user_input["bold_prefix"],
+                "ignore_title_voice":   user_input.get("ignore_title_voice", False),
+                "priority_volume":      float(user_input["priority_volume"]),
+                "person_entities":      user_input.get("person_entities", []),
+                "weekend_days":         user_input.get("weekend_days", [5, 6]),
             })
             return self._save()
 
         eff = self._effective
         schema = vol.Schema({
-            vol.Optional("assistant_name",  default=eff.get("assistant_name",  DEFAULT_ASSISTANT_NAME)):  _TEXT,
-            vol.Optional("date_format",     default=eff.get("date_format",     DEFAULT_DATE_FORMAT)):     _TEXT,
-            vol.Optional("include_time",    default=eff.get("include_time",    DEFAULT_INCLUDE_TIME)):    _BOOL,
-            vol.Optional("bold_prefix",     default=eff.get("bold_prefix",     DEFAULT_BOLD_PREFIX)):     _BOOL,
-            vol.Optional("priority_volume", default=eff.get("priority_volume", DEFAULT_PRIORITY_VOLUME)): _SLIDER_0_1,
-            vol.Optional("person_entities", default=eff.get("person_entities", [])): _PERSON_MULTI,
+            vol.Optional("assistant_name",     default=eff.get("assistant_name",     DEFAULT_ASSISTANT_NAME)):      _TEXT,
+            vol.Optional("date_format",        default=eff.get("date_format",        DEFAULT_DATE_FORMAT)):         _TEXT,
+            vol.Optional("include_time",       default=eff.get("include_time",       DEFAULT_INCLUDE_TIME)):        _BOOL,
+            vol.Optional("bold_prefix",        default=eff.get("bold_prefix",        DEFAULT_BOLD_PREFIX)):         _BOOL,
+            vol.Optional("ignore_title_voice", default=eff.get("ignore_title_voice", DEFAULT_IGNORE_TITLE_VOICE)):  _BOOL,
+            vol.Optional("priority_volume",    default=eff.get("priority_volume",    DEFAULT_PRIORITY_VOLUME)):     _SLIDER_0_1,
+            vol.Optional("person_entities",    default=eff.get("person_entities",    [])):                          _PERSON_MULTI,
+            vol.Optional("weekend_days",       default=eff.get("weekend_days",       DEFAULT_WEEKEND_DAYS)):        _WEEKDAY_MULTI,
         })
         return self.async_show_form(step_id="global_settings", data_schema=schema)
 
