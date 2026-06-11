@@ -442,6 +442,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     service_payload["data"].update(all_additional_data)
                 else:
                     service_payload.update(all_additional_data)
+            if not is_voice_channel and not is_command_message and srv_domain == "notify" and parse_mode:
+                if "data" not in service_payload:
+                    service_payload["data"] = {}
+                service_payload["data"].setdefault("parse_mode", parse_mode)
 
             ####################################################################
             physical_players = []
