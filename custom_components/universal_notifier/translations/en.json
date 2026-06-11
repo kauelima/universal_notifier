@@ -12,21 +12,31 @@
           "priority_volume": "Priority Volume (0.0 - 1.0)",
           "person_entities": "Person Entities (optional, for presence detection)",
           "dnd_start":       "DND Start (HH:MM)",
-          "dnd_end":         "DND End (HH:MM)"
+          "dnd_end":         "DND End (HH:MM)",
+          "ignore_title_voice": "Ignore Title for Voice Messages",
+          "weekend_days": "Weekend Days"
         }
       },
       "time_slots": {
         "title": "Time Slots",
-        "description": "Set the start time and TTS volume for each time period.",
+        "description": "Set the start time and TTS volume for each time period. Weekday and Weekend can have different settings.",
         "data": {
-          "morning_start":    "Morning Start",
-          "morning_volume":   "Morning Volume",
-          "afternoon_start":  "Afternoon Start",
-          "afternoon_volume": "Afternoon Volume",
-          "evening_start":    "Evening Start",
-          "evening_volume":   "Evening Volume",
-          "night_start":      "Night Start",
-          "night_volume":     "Night Volume"
+          "weekday_morning_start":    "Weekday - Morning Start",
+          "weekday_morning_volume":   "Weekday - Morning Volume",
+          "weekday_afternoon_start":  "Weekday - Afternoon Start",
+          "weekday_afternoon_volume": "Weekday - Afternoon Volume",
+          "weekday_evening_start":    "Weekday - Evening Start",
+          "weekday_evening_volume":   "Weekday - Evening Volume",
+          "weekday_night_start":      "Weekday - Night Start",
+          "weekday_night_volume":     "Weekday - Night Volume",
+          "weekend_morning_start":    "Weekend - Morning Start",
+          "weekend_morning_volume":   "Weekend - Morning Volume",
+          "weekend_afternoon_start":  "Weekend - Afternoon Start",
+          "weekend_afternoon_volume": "Weekend - Afternoon Volume",
+          "weekend_evening_start":    "Weekend - Evening Start",
+          "weekend_evening_volume":   "Weekend - Evening Volume",
+          "weekend_night_start":      "Weekend - Night Start",
+          "weekend_night_volume":     "Weekend - Night Volume"
         }
       },
       "greetings": {
@@ -83,7 +93,9 @@
           "include_time":    "Include Time in Message Prefix",
           "bold_prefix":     "Bold Message Prefix",
           "priority_volume":  "Priority Volume (0.0 - 1.0)",
-          "person_entities": "Person Entities (optional, for presence detection)"
+          "person_entities": "Person Entities (optional, for presence detection)",
+          "ignore_title_voice": "Ignore Title for Voice Messages",
+          "weekend_days": "Weekend Days"
         }
       },
       "dnd": {
@@ -96,16 +108,24 @@
       },
       "time_slots": {
         "title": "Time Slots",
-        "description": "Set the start time and TTS volume for each time period.",
+        "description": "Set the start time and TTS volume for each time period. Weekday and Weekend can have different settings.",
         "data": {
-          "morning_start":    "Morning Start",
-          "morning_volume":   "Morning Volume",
-          "afternoon_start":  "Afternoon Start",
-          "afternoon_volume": "Afternoon Volume",
-          "evening_start":    "Evening Start",
-          "evening_volume":   "Evening Volume",
-          "night_start":      "Night Start",
-          "night_volume":     "Night Volume"
+          "weekday_morning_start":    "Weekday - Morning Start",
+          "weekday_morning_volume":   "Weekday - Morning Volume",
+          "weekday_afternoon_start":  "Weekday - Afternoon Start",
+          "weekday_afternoon_volume": "Weekday - Afternoon Volume",
+          "weekday_evening_start":    "Weekday - Evening Start",
+          "weekday_evening_volume":   "Weekday - Evening Volume",
+          "weekday_night_start":      "Weekday - Night Start",
+          "weekday_night_volume":     "Weekday - Night Volume",
+          "weekend_morning_start":    "Weekend - Morning Start",
+          "weekend_morning_volume":   "Weekend - Morning Volume",
+          "weekend_afternoon_start":  "Weekend - Afternoon Start",
+          "weekend_afternoon_volume": "Weekend - Afternoon Volume",
+          "weekend_evening_start":    "Weekend - Evening Start",
+          "weekend_evening_volume":   "Weekend - Evening Volume",
+          "weekend_night_start":      "Weekend - Night Start",
+          "weekend_night_volume":     "Weekend - Night Volume"
         }
       },
       "greetings": {
