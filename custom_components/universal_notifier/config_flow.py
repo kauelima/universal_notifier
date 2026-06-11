@@ -118,7 +118,11 @@ def _text_to_greetings(user_input: dict) -> dict[str, list[str]]:
 
 def _slots_to_fields(ts: dict, group: str = "weekday") -> dict:
     """Convert one group of time_slots to flat form fields with prefix."""
-    group_data = ts.get(group, DEFAULT_TIME_SLOTS[group]) if isinstance(ts, dict) else ts
+    # Handle old flat format (no weekday/weekend nesting)
+    if isinstance(ts, dict) and "weekday" not in ts and "weekend" not in ts:
+        group_data = ts
+    else:
+        group_data = ts.get(group, DEFAULT_TIME_SLOTS[group]) if isinstance(ts, dict) else ts
     if not isinstance(group_data, dict):
         group_data = DEFAULT_TIME_SLOTS[group]
     fields = {}
