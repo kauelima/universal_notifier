@@ -36,11 +36,25 @@ DEFAULT_INCLUDE_TIME    = True
 DEFAULT_BOLD_PREFIX     = True
 DEFAULT_PRIORITY_VOLUME = 0.9
 DEFAULT_DND             = {"start": "23:00", "end": "06:00"}
-DEFAULT_TIME_SLOTS      = {
+DEFAULT_IGNORE_TITLE_VOICE = False
+DEFAULT_WEEKEND_DAYS       = [5, 6]  # 0=Mon ... 6=Sun
+DEFAULT_TIME_SLOTS_WEEKDAY = {
     "morning":   {"start": "07:00", "volume": 0.35},
     "afternoon": {"start": "12:00", "volume": 0.40},
     "evening":   {"start": "19:00", "volume": 0.30},
     "night":     {"start": "22:00", "volume": 0.10},
+}
+DEFAULT_TIME_SLOTS_WEEKEND = {
+    "morning":   {"start": "07:00", "volume": 0.35},
+    "afternoon": {"start": "12:00", "volume": 0.40},
+    "evening":   {"start": "19:00", "volume": 0.30},
+    "night":     {"start": "22:00", "volume": 0.10},
+}
+
+# New nested default time_slots for config flow
+DEFAULT_TIME_SLOTS = {
+    "weekday": DEFAULT_TIME_SLOTS_WEEKDAY,
+    "weekend": DEFAULT_TIME_SLOTS_WEEKEND,
 }
 DEFAULT_GREETINGS = {
     "morning":   ["Buongiorno", "Ben alzato", "Salve", "Buondì"],
@@ -60,6 +74,21 @@ _BOOL          = BooleanSelector()
 _MULTILINE     = TextSelector(TextSelectorConfig(multiline=True))
 _PERSON_MULTI  = EntitySelector(EntitySelectorConfig(domain="person", multiple=True))
 _MEDIA_PLAYER  = EntitySelector(EntitySelectorConfig(domain="media_player", multiple=True))
+_WEEKDAY_MULTI = SelectSelector(
+    SelectSelectorConfig(
+        options=[
+            {"value": 0, "label": "Monday"},
+            {"value": 1, "label": "Tuesday"},
+            {"value": 2, "label": "Wednesday"},
+            {"value": 3, "label": "Thursday"},
+            {"value": 4, "label": "Friday"},
+            {"value": 5, "label": "Saturday"},
+            {"value": 6, "label": "Sunday"},
+        ],
+        multiple=True,
+        mode=SelectSelectorMode.DROPDOWN,
+    )
+)
 
 
 def _is_valid_time(value: str) -> bool:
@@ -87,38 +116,52 @@ def _text_to_greetings(user_input: dict) -> dict[str, list[str]]:
     }
 
 
-def _slots_to_fields(ts: dict) -> dict:
-    """Convert time_slots dict to flat form fields for pre-fill."""
+def _slots_to_fields(ts: dict, group: str = "weekday") -> dict:
+    """Convert one group of time_slots to flat form fields with prefix."""
+    group_data = ts.get(group, DEFAULT_TIME_SLOTS[group]) if isinstance(ts, dict) else ts
+    if not isinstance(group_data, dict):
+        group_data = DEFAULT_TIME_SLOTS[group]
     fields = {}
     for slot in SLOT_KEYS:
-        fields[f"{slot}_start"]  = ts.get(slot, DEFAULT_TIME_SLOTS[slot])["start"]
-        fields[f"{slot}_volume"] = ts.get(slot, DEFAULT_TIME_SLOTS[slot])["volume"]
+        slot_data = group_data.get(slot, DEFAULT_TIME_SLOTS[group][slot])
+        fields[f"{group}_{slot}_start"]  = slot_data["start"]
+        fields[f"{group}_{slot}_volume"] = slot_data["volume"]
     return fields
 
 
 def _fields_to_slots(user_input: dict) -> dict:
-    """Convert flat form fields back to time_slots dict."""
-    return {
-        slot: {
-            "start":  user_input[f"{slot}_start"],
-            "volume": float(user_input[f"{slot}_volume"]),
-        }
-        for slot in SLOT_KEYS
-    }
+    """Convert dual-group flat form fields back to nested time_slots dict."""
+    result = {}
+    for group in ("weekday", "weekend"):
+        result[group] = {}
+        for slot in SLOT_KEYS:
+            result[group][slot] = {
+                "start":  user_input[f"{group}_{slot}_start"],
+                "volume": float(user_input[f"{group}_{slot}_volume"]),
+            }
+    return result
+
+
+def _dual_time_slots_schema(defaults: dict, group: str) -> dict:
+    """Return a partial schema dict for one group (weekday/weekend)."""
+    d = _slots_to_fields(defaults, group)
+    result = {}
+    for slot in SLOT_KEYS:
+        result[f"{group}_{slot}_start"]  = vol.Optional(
+            f"{group}_{slot}_start", default=d[f"{group}_{slot}_start"]
+        ): _TEXT
+        result[f"{group}_{slot}_volume"] = vol.Optional(
+            f"{group}_{slot}_volume", default=d[f"{group}_{slot}_volume"]
+        ): _SLIDER_0_1
+    return result
 
 
 def _time_slots_schema(defaults: dict) -> vol.Schema:
-    d = _slots_to_fields(defaults)
-    return vol.Schema({
-        vol.Optional("morning_start",    default=d["morning_start"]):    _TEXT,
-        vol.Optional("morning_volume",   default=d["morning_volume"]):   _SLIDER_0_1,
-        vol.Optional("afternoon_start",  default=d["afternoon_start"]):  _TEXT,
-        vol.Optional("afternoon_volume", default=d["afternoon_volume"]): _SLIDER_0_1,
-        vol.Optional("evening_start",    default=d["evening_start"]):    _TEXT,
-        vol.Optional("evening_volume",   default=d["evening_volume"]):   _SLIDER_0_1,
-        vol.Optional("night_start",      default=d["night_start"]):      _TEXT,
-        vol.Optional("night_volume",     default=d["night_volume"]):     _SLIDER_0_1,
-    })
+    """Build the dual-group time_slots schema."""
+    schema_dict = {}
+    schema_dict.update(_dual_time_slots_schema(defaults, "weekday"))
+    schema_dict.update(_dual_time_slots_schema(defaults, "weekend"))
+    return vol.Schema(schema_dict)
 
 
 def _greetings_schema(defaults: dict) -> vol.Schema:
@@ -186,11 +229,12 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             valid = True
-            for slot in SLOT_KEYS:
-                t = user_input.get(f"{slot}_start", "")
-                if not _is_valid_time(t):
-                    errors[f"{slot}_start"] = "invalid_time"
-                    valid = False
+            for group in ("weekday", "weekend"):
+                for slot in SLOT_KEYS:
+                    t = user_input.get(f"{group}_{slot}_start", "")
+                    if not _is_valid_time(t):
+                        errors[f"{group}_{slot}_start"] = "invalid_time"
+                        valid = False
             if valid:
                 self._data["time_slots"] = _fields_to_slots(user_input)
                 return await self.async_step_greetings()
@@ -351,11 +395,12 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
 
         if user_input is not None:
             valid = True
-            for slot in SLOT_KEYS:
-                t = user_input.get(f"{slot}_start", "")
-                if not _is_valid_time(t):
-                    errors[f"{slot}_start"] = "invalid_time"
-                    valid = False
+            for group in ("weekday", "weekend"):
+                for slot in SLOT_KEYS:
+                    t = user_input.get(f"{group}_{slot}_start", "")
+                    if not _is_valid_time(t):
+                        errors[f"{group}_{slot}_start"] = "invalid_time"
+                        valid = False
             if valid:
                 self._current_options["time_slots"] = _fields_to_slots(user_input)
                 return self._save()
