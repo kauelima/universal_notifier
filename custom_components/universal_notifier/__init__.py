@@ -155,6 +155,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     dnd_conf            = conf.get(CONF_DND, {"start": "23:00", "end": "06:00"})
     base_greetings      = conf.get(CONF_GREETINGS, {})
     global_bold_setting = conf.get(CONF_BOLD_PREFIX, True)
+    ignore_title_voice   = conf.get("ignore_title_voice", False)
+    weekend_days         = conf.get("weekend_days", [5, 6])
 
     # --- Inizializzazione coda TTS ---
     voice_queue = asyncio.Queue()
@@ -242,7 +244,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # 2. Analisi Contesto
         now = dt_util.now()
         now_time = now.time()
-        slot_key, slot_volume = get_current_slot_info(time_slots_conf, now_time)
+        now_weekday = now.weekday()  # 0=Mon, 6=Sun
+        slot_key, slot_volume = get_current_slot_info(
+            time_slots_conf, now_time, now_weekday, weekend_days
+        )
         is_dnd_active = is_time_in_range(dnd_conf["start"], dnd_conf["end"], now_time)
 
         # 3. Gestione Saluti
@@ -331,7 +336,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     clean_msg = clean_text_for_tts(str(target_raw_message))
                     clean_greet = clean_text_for_tts(current_greeting)
                     full_spoken_text = ""
-                    if final_title:
+                    if final_title and not ignore_title_voice:
                         clean_title = clean_text_for_tts(final_title)
                         if clean_title:
                             full_spoken_text += f"{clean_title}. "
