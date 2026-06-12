@@ -156,7 +156,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     base_greetings      = conf.get(CONF_GREETINGS, {})
     global_bold_setting = conf.get(CONF_BOLD_PREFIX, True)
     ignore_title_voice   = conf.get("ignore_title_voice", False)
-    weekend_days         = conf.get("weekend_days", [5, 6])
+    weekend_days         = [int(d) if isinstance(d, str) else d for d in conf.get("weekend_days", ["5", "6"])]
 
     # --- Inizializzazione coda TTS ---
     voice_queue = asyncio.Queue()

@@ -32,6 +32,9 @@ def get_current_slot_info(slots_conf: dict, now_time,
         slots_conf = DEFAULT_TIME_SLOTS
 
     # Determine which group to use: weekend vs weekday
+    # Convert weekend_days to ints (HA selector now returns strings)
+    if weekend_days is not None:
+        weekend_days = [int(d) if isinstance(d, str) else d for d in weekend_days]
     if (weekend_days is not None and now_weekday is not None
             and now_weekday in weekend_days):
         group = slots_conf.get("weekend", slots_conf)

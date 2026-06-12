@@ -37,7 +37,7 @@ DEFAULT_BOLD_PREFIX     = True
 DEFAULT_PRIORITY_VOLUME = 0.9
 DEFAULT_DND             = {"start": "23:00", "end": "06:00"}
 DEFAULT_IGNORE_TITLE_VOICE = False
-DEFAULT_WEEKEND_DAYS       = [5, 6]  # 0=Mon ... 6=Sun
+DEFAULT_WEEKEND_DAYS       = ["5", "6"]  # 0=Mon ... 6=Sun
 DEFAULT_TIME_SLOTS_WEEKDAY = {
     "morning":   {"start": "07:00", "volume": 0.35},
     "afternoon": {"start": "12:00", "volume": 0.40},
@@ -77,13 +77,13 @@ _MEDIA_PLAYER  = EntitySelector(EntitySelectorConfig(domain="media_player", mult
 _WEEKDAY_MULTI = SelectSelector(
     SelectSelectorConfig(
         options=[
-            {"value": 0, "label": "Monday"},
-            {"value": 1, "label": "Tuesday"},
-            {"value": 2, "label": "Wednesday"},
-            {"value": 3, "label": "Thursday"},
-            {"value": 4, "label": "Friday"},
-            {"value": 5, "label": "Saturday"},
-            {"value": 6, "label": "Sunday"},
+            {"value": "0", "label": "Monday"},
+            {"value": "1", "label": "Tuesday"},
+            {"value": "2", "label": "Wednesday"},
+            {"value": "3", "label": "Thursday"},
+            {"value": "4", "label": "Friday"},
+            {"value": "5", "label": "Saturday"},
+            {"value": "6", "label": "Sunday"},
         ],
         multiple=True,
         mode=SelectSelectorMode.DROPDOWN,
@@ -211,7 +211,7 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "ignore_title_voice":   user_input.get("ignore_title_voice", False),
                     "priority_volume":      float(user_input["priority_volume"]),
                     "person_entities":      user_input.get("person_entities", []),
-                    "weekend_days":         user_input.get("weekend_days", [5, 6]),
+                    "weekend_days":         [int(d) if isinstance(d, str) else d for d in user_input.get("weekend_days", ["5", "6"])],
                     "dnd": {"start": dnd_start, "end": dnd_end},
                 })
                 return await self.async_step_time_slots()
@@ -360,7 +360,7 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
                 "ignore_title_voice":   user_input.get("ignore_title_voice", False),
                 "priority_volume":      float(user_input["priority_volume"]),
                 "person_entities":      user_input.get("person_entities", []),
-                "weekend_days":         user_input.get("weekend_days", [5, 6]),
+                "weekend_days":         [int(d) if isinstance(d, str) else d for d in user_input.get("weekend_days", ["5", "6"])],
             })
             return self._save()
 
