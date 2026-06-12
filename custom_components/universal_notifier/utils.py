@@ -6,6 +6,21 @@ from homeassistant.util import dt as dt_util
 # HELPER FUNCTIONS
 # ==============================================================================
 
+DEFAULT_TIME_SLOTS = {
+    "weekday": {
+        "morning": {"start": "07:00", "volume": 0.35},
+        "afternoon": {"start": "12:00", "volume": 0.40},
+        "evening": {"start": "19:00", "volume": 0.30},
+        "night": {"start": "22:00", "volume": 0.10},
+    },
+    "weekend": {
+        "morning": {"start": "07:00", "volume": 0.35},
+        "afternoon": {"start": "12:00", "volume": 0.40},
+        "evening": {"start": "19:00", "volume": 0.30},
+        "night": {"start": "22:00", "volume": 0.10},
+    },
+}
+
 def estimate_tts_duration(text: str, buffer: float = 1.5) -> float:
     """Stima la durata del messaggio in secondi basandosi sulle parole."""
     if not text: return 0

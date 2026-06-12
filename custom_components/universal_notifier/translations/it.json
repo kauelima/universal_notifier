@@ -11,8 +11,10 @@
           "bold_prefix":     "Prefisso messaggio in grassetto",
           "priority_volume": "Volume prioritario (0.0 - 1.0)",
           "person_entities": "Entità persona (opzionale, per rilevamento presenza)",
-          "dnd_start":       "Inizio Non Disturbare (HH:MM)",
-          "dnd_end":         "Fine Non Disturbare (HH:MM)",
+          "weekday_dnd_start": "Inizio DND feriali (HH:MM)",
+          "weekday_dnd_end":   "Fine DND feriali (HH:MM)",
+          "weekend_dnd_start": "Inizio DND weekend (HH:MM)",
+          "weekend_dnd_end":   "Fine DND weekend (HH:MM)",
           "ignore_title_voice": "Ignora titolo nei messaggi vocali",
           "weekend_days": "Giorni weekend"
         }
@@ -102,8 +104,10 @@
         "title": "Non Disturbare",
         "description": "Le notifiche vocali vengono soppresse in questa finestra oraria (salvo priority=true).",
         "data": {
-          "dnd_start": "Inizio Non Disturbare (HH:MM)",
-          "dnd_end":   "Fine Non Disturbare (HH:MM)"
+          "weekday_dnd_start": "Inizio DND feriali (HH:MM)",
+          "weekday_dnd_end":   "Fine DND feriali (HH:MM)",
+          "weekend_dnd_start": "Inizio DND weekend (HH:MM)",
+          "weekend_dnd_end":   "Fine DND weekend (HH:MM)"
         }
       },
       "time_slots": {

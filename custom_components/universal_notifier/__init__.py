@@ -153,6 +153,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     global_priority_vol = conf.get(CONF_PRIORITY_VOLUME, 0.9)
     time_slots_conf     = conf.get(CONF_TIME_SLOTS, {})
     dnd_conf            = conf.get(CONF_DND, {"start": "23:00", "end": "06:00"})
+    # Retrocompat: migrate old flat DND to nested weekday/weekend
+    if isinstance(dnd_conf, dict) and "weekday" not in dnd_conf and "start" in dnd_conf:
+        dnd_conf = {"weekday": dnd_conf, "weekend": dnd_conf}
     base_greetings      = conf.get(CONF_GREETINGS, {})
     global_bold_setting = conf.get(CONF_BOLD_PREFIX, True)
     ignore_title_voice   = conf.get("ignore_title_voice", False)
@@ -248,7 +251,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         slot_key, slot_volume = get_current_slot_info(
             time_slots_conf, now_time, now_weekday, weekend_days
         )
-        is_dnd_active = is_time_in_range(dnd_conf["start"], dnd_conf["end"], now_time)
+        if now_weekday in weekend_days:
+            active_dnd = dnd_conf.get("weekend", dnd_conf.get("weekday", {"start": "23:00", "end": "06:00"}))
+        else:
+            active_dnd = dnd_conf.get("weekday", {"start": "23:00", "end": "06:00"})
+        is_dnd_active = is_time_in_range(active_dnd["start"], active_dnd["end"], now_time)
 
         # 3. Gestione Saluti
         override_greetings_data = call.data.get(CONF_OVERRIDE_GREETINGS)

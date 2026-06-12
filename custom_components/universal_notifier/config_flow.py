@@ -35,20 +35,23 @@ DEFAULT_DATE_FORMAT     = "%H:%M:%S"
 DEFAULT_INCLUDE_TIME    = True
 DEFAULT_BOLD_PREFIX     = True
 DEFAULT_PRIORITY_VOLUME = 0.9
-DEFAULT_DND             = {"start": "23:00", "end": "06:00"}
+DEFAULT_DND             = {
+    "weekday": {"start": "23:00", "end": "06:00"},
+    "weekend": {"start": "00:00", "end": "08:00"},
+}
 DEFAULT_IGNORE_TITLE_VOICE = False
 DEFAULT_WEEKEND_DAYS       = ["5", "6"]  # 0=Mon ... 6=Sun
 DEFAULT_TIME_SLOTS_WEEKDAY = {
     "morning":   {"start": "07:00", "volume": 0.35},
     "afternoon": {"start": "12:00", "volume": 0.40},
     "evening":   {"start": "19:00", "volume": 0.30},
-    "night":     {"start": "22:00", "volume": 0.10},
+    "night":     {"start": "21:30", "volume": 0.10},
 }
 DEFAULT_TIME_SLOTS_WEEKEND = {
-    "morning":   {"start": "07:00", "volume": 0.35},
-    "afternoon": {"start": "12:00", "volume": 0.40},
+    "morning":   {"start": "08:00", "volume": 0.30},
+    "afternoon": {"start": "14:00", "volume": 0.40},
     "evening":   {"start": "19:00", "volume": 0.30},
-    "night":     {"start": "22:00", "volume": 0.10},
+    "night":     {"start": "22:30", "volume": 0.10},
 }
 
 # New nested default time_slots for config flow
@@ -196,12 +199,18 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            dnd_start = user_input.get("dnd_start", "")
-            dnd_end   = user_input.get("dnd_end", "")
-            if not _is_valid_time(dnd_start):
-                errors["dnd_start"] = "invalid_time"
-            elif not _is_valid_time(dnd_end):
-                errors["dnd_end"] = "invalid_time"
+            wd_dnd_start  = user_input.get("weekday_dnd_start", "")
+            wd_dnd_end    = user_input.get("weekday_dnd_end", "")
+            we_dnd_start  = user_input.get("weekend_dnd_start", "")
+            we_dnd_end    = user_input.get("weekend_dnd_end", "")
+            if not _is_valid_time(wd_dnd_start):
+                errors["weekday_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(wd_dnd_end):
+                errors["weekday_dnd_end"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_start):
+                errors["weekend_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_end):
+                errors["weekend_dnd_end"] = "invalid_time"
             else:
                 self._data.update({
                     "assistant_name":       user_input["assistant_name"],
@@ -212,7 +221,10 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "priority_volume":      float(user_input["priority_volume"]),
                     "person_entities":      user_input.get("person_entities", []),
                     "weekend_days":         [int(d) if isinstance(d, str) else d for d in user_input.get("weekend_days", ["5", "6"])],
-                    "dnd": {"start": dnd_start, "end": dnd_end},
+                    "dnd": {
+                        "weekday": {"start": wd_dnd_start, "end": wd_dnd_end},
+                        "weekend": {"start": we_dnd_start, "end": we_dnd_end},
+                    },
                 })
                 return await self.async_step_time_slots()
 
@@ -225,8 +237,10 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Optional("priority_volume",   default=DEFAULT_PRIORITY_VOLUME):     _SLIDER_0_1,
             vol.Optional("person_entities",   default=[]):                          _PERSON_MULTI,
             vol.Optional("weekend_days",      default=DEFAULT_WEEKEND_DAYS):        _WEEKDAY_MULTI,
-            vol.Optional("dnd_start", default=DEFAULT_DND["start"]): _TEXT,
-            vol.Optional("dnd_end",   default=DEFAULT_DND["end"]):   _TEXT,
+            vol.Optional("weekday_dnd_start", default=DEFAULT_DND["weekday"]["start"]): _TEXT,
+            vol.Optional("weekday_dnd_end",   default=DEFAULT_DND["weekday"]["end"]):   _TEXT,
+            vol.Optional("weekend_dnd_start", default=DEFAULT_DND["weekend"]["start"]): _TEXT,
+            vol.Optional("weekend_dnd_end",   default=DEFAULT_DND["weekend"]["end"]):   _TEXT,
         })
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
@@ -383,20 +397,36 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
         errors = {}
 
         if user_input is not None:
-            dnd_start = user_input.get("dnd_start", "")
-            dnd_end   = user_input.get("dnd_end", "")
-            if not _is_valid_time(dnd_start):
-                errors["dnd_start"] = "invalid_time"
-            elif not _is_valid_time(dnd_end):
-                errors["dnd_end"] = "invalid_time"
+            wd_dnd_start  = user_input.get("weekday_dnd_start", "")
+            wd_dnd_end    = user_input.get("weekday_dnd_end", "")
+            we_dnd_start  = user_input.get("weekend_dnd_start", "")
+            we_dnd_end    = user_input.get("weekend_dnd_end", "")
+            if not _is_valid_time(wd_dnd_start):
+                errors["weekday_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(wd_dnd_end):
+                errors["weekday_dnd_end"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_start):
+                errors["weekend_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_end):
+                errors["weekend_dnd_end"] = "invalid_time"
             else:
-                self._current_options["dnd"] = {"start": dnd_start, "end": dnd_end}
+                self._current_options["dnd"] = {
+                    "weekday": {"start": wd_dnd_start, "end": wd_dnd_end},
+                    "weekend": {"start": we_dnd_start, "end": we_dnd_end},
+                }
                 return self._save()
 
         dnd = self._effective.get("dnd", DEFAULT_DND)
+        # Retrocompat: flat format → nested
+        if "weekday" not in dnd and "start" in dnd:
+            dnd = {"weekday": dnd, "weekend": dnd}
+        wd = dnd.get("weekday", DEFAULT_DND["weekday"])
+        we = dnd.get("weekend", DEFAULT_DND["weekend"])
         schema = vol.Schema({
-            vol.Optional("dnd_start", default=dnd.get("start", DEFAULT_DND["start"])): _TEXT,
-            vol.Optional("dnd_end",   default=dnd.get("end",   DEFAULT_DND["end"])):   _TEXT,
+            vol.Optional("weekday_dnd_start", default=wd.get("start", DEFAULT_DND["weekday"]["start"])): _TEXT,
+            vol.Optional("weekday_dnd_end",   default=wd.get("end",   DEFAULT_DND["weekday"]["end"])):   _TEXT,
+            vol.Optional("weekend_dnd_start", default=we.get("start", DEFAULT_DND["weekend"]["start"])): _TEXT,
+            vol.Optional("weekend_dnd_end",   default=we.get("end",   DEFAULT_DND["weekend"]["end"])):   _TEXT,
         })
         return self.async_show_form(step_id="dnd", data_schema=schema, errors=errors)
 

@@ -13,16 +13,27 @@ class UNotifierDNDSensor(BinarySensorEntity):
     _attr_name = "DND"
 
     def __init__(self, conf, entry):
-        self._conf = conf.get(CONF_DND, {})
+        dnd = conf.get(CONF_DND, {})
+        # Retrocompat: migrate old flat DND to nested weekday/weekend
+        if isinstance(dnd, dict) and "weekday" not in dnd and "start" in dnd:
+            dnd = {"weekday": dnd, "weekend": dnd}
+        self._dnd = dnd
+        self._weekend_days = [int(d) if isinstance(d, str) else d for d in conf.get("weekend_days", ["5", "6"])]
         self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_dnd"
         self._attr_device_info = get_device_info(entry.entry_id)
 
     @property
     def is_on(self) -> bool:
         """Ritorna True se DND è attivo."""
-        if not self._conf: return False
-        now_time = dt_util.now().time()
-        return is_time_in_range(self._conf["start"], self._conf["end"], now_time)
+        if not self._dnd: return False
+        now = dt_util.now()
+        now_time = now.time()
+        now_weekday = now.weekday()
+        if now_weekday in self._weekend_days:
+            active_dnd = self._dnd.get("weekend", self._dnd.get("weekday", {"start": "23:00", "end": "06:00"}))
+        else:
+            active_dnd = self._dnd.get("weekday", {"start": "23:00", "end": "06:00"})
+        return is_time_in_range(active_dnd["start"], active_dnd["end"], now_time)
 
     @property
     def icon(self):

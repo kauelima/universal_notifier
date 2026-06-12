@@ -10,3 +10,5 @@ __pycache__/
 COMPLETE_GUIDE.md
 OLD_README.md
 docs/superpowers/
+.venv
+.github/copilot-instructions.md

@@ -11,8 +11,10 @@
           "bold_prefix":     "Bold Message Prefix",
           "priority_volume": "Priority Volume (0.0 - 1.0)",
           "person_entities": "Person Entities (optional, for presence detection)",
-          "dnd_start":       "DND Start (HH:MM)",
-          "dnd_end":         "DND End (HH:MM)",
+          "weekday_dnd_start": "Weekday DND Start (HH:MM)",
+          "weekday_dnd_end":   "Weekday DND End (HH:MM)",
+          "weekend_dnd_start": "Weekend DND Start (HH:MM)",
+          "weekend_dnd_end":   "Weekend DND End (HH:MM)",
           "ignore_title_voice": "Ignore Title for Voice Messages",
           "weekend_days": "Weekend Days"
         }
@@ -102,8 +104,10 @@
         "title": "Do Not Disturb",
         "description": "Voice notifications are suppressed during this window (unless priority=true).",
         "data": {
-          "dnd_start": "DND Start (HH:MM)",
-          "dnd_end":   "DND End (HH:MM)"
+          "weekday_dnd_start": "Weekday DND Start (HH:MM)",
+          "weekday_dnd_end":   "Weekday DND End (HH:MM)",
+          "weekend_dnd_start": "Weekend DND Start (HH:MM)",
+          "weekend_dnd_end":   "Weekend DND End (HH:MM)"
         }
       },
       "time_slots": {
