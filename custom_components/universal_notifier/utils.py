@@ -1,4 +1,4 @@
-# /config/custom_components/universal_notifier/binary_sensor.py
+# /config/custom_components/universal_notifier/utils.py
 import re
 from homeassistant.util import dt as dt_util
 
@@ -97,15 +97,33 @@ def get_current_slot_info(slots_conf: dict, now_time,
 def clean_text_for_tts(text: str) -> str:
     """Rimuove caratteri speciali per la sintesi vocale."""
     if not text: return ""
+    text = re.sub(r'<[^>]+>', '', text)    # Via HTML tags
     text = re.sub(r'[*_`\[\]]', '', text) # Via markdown
     text = re.sub(r'http\S+', '', text)    # Via URL
-    return text.strip()
+    # Via emoji/icon (preserva lettere accentate)
+    text = re.sub(
+        r'[\U0001F600-\U0001F64F'   # Emoticons
+        r'\U0001F300-\U0001F5FF'    # Simboli e pittogrammi
+        r'\U0001F680-\U0001F6FF'    # Trasporti e mappe
+        r'\U0001F900-\U0001F9FF'    # Supplementari
+        r'\U0001FA00-\U0001FA6F'    # Scacchi ecc.
+        r'\U0001FA70-\U0001FAFF'    # Oggetti estesi
+        r'\U00002702-\U000027B0'    # Dingbats
+        r'\U0000FE00-\U0000FE0F'    # Variation Selectors
+        r'\U0000200D'               # Zero Width Joiner
+        r'\U00002600-\U000026FF'    # Simboli vari
+        r'\U00002700-\U000027BF'    # Dingbats
+        r'\U0000231A-\U0000231B'    # Orologio, clessidra
+        r'\U00002328'               # Tastiera
+        r'\U000023CF'               # Eject
+        r'\U000023E9-\U000023F3'    # Simboli media
+        r'\U000023F8-\U000023FA'    # Simboli media
+        r']+', '', text)
+    return re.sub(r'\s{2,}', ' ', text).strip()
 
 def sanitize_text_visual(text: str, parse_mode: str = None) -> str:
-    """Pulisce o esegue l'escape del testo per visualizzazione (HTML/Markdown)."""
+    """Pulisce il testo per visualizzazione, preservando l'HTML dell'utente."""
     if not text: return ""
-    if parse_mode and "html" in parse_mode.lower():
-        text = text.replace("<", "&lt;").replace(">", "&gt;")
     return text
 
 def apply_formatting(text: str, parse_mode: str, style: str = "bold") -> str:
@@ -117,3 +135,47 @@ def apply_formatting(text: str, parse_mode: str, style: str = "bold") -> str:
     elif "markdown" in mode:
         return f"**{text}**" 
     return text
+
+
+def escape_markdownv2(text: str) -> str:
+    """Escape caratteri speciali per Telegram MarkdownV2, preservando **bold** e *italic*."""
+    if not text: return ""
+    special = r'\_*[]()~`>#+=|{}.!-'
+    saved = {}
+    counter = [0]
+
+    def _protect(m):
+        key = f'\x00{counter[0]}\x00'
+        counter[0] += 1
+        inner = m.group(1)
+        for ch in special:
+            inner = inner.replace(ch, '\\' + ch)
+        saved[key] = f'**{inner}**'
+        return key
+
+    # Protegge **bold** e *italic*
+    result = re.sub(r'\*\*(.+?)\*\*', _protect, text)
+    result = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', _protect, result)
+    # Escape di tutti i caratteri speciali rimasti
+    for ch in special:
+        result = result.replace(ch, '\\' + ch)
+    # Ripristina i blocchi protetti
+    for key, val in saved.items():
+        result = result.replace(key, val)
+    return result
+
+
+def normalize_parse_mode(parse_mode: str, srv_domain: str) -> str | None:
+    """Normalizza parse_mode per il dominio di servizio specifico."""
+    if not parse_mode:
+        return None
+    pm = parse_mode.strip()
+    if srv_domain == "telegram_bot":
+        low = pm.lower()
+        if low == "html":
+            return "HTML"
+        if low in ("markdown", "markdownv2"):
+            return "MarkdownV2"
+        return pm
+    else:
+        return pm.lower()

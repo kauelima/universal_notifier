@@ -34,12 +34,12 @@ DEFAULT_ASSISTANT_NAME  = ""
 DEFAULT_DATE_FORMAT     = "%H:%M:%S"
 DEFAULT_INCLUDE_TIME    = True
 DEFAULT_BOLD_PREFIX     = True
+DEFAULT_IGNORE_TITLE_VOICE = True
 DEFAULT_PRIORITY_VOLUME = 0.9
 DEFAULT_DND             = {
     "weekday": {"start": "23:00", "end": "06:00"},
     "weekend": {"start": "00:00", "end": "08:00"},
 }
-DEFAULT_IGNORE_TITLE_VOICE = False
 DEFAULT_WEEKEND_DAYS       = ["5", "6"]  # 0=Mon ... 6=Sun
 DEFAULT_TIME_SLOTS_WEEKDAY = {
     "morning":   {"start": "07:00", "volume": 0.35},
@@ -217,7 +217,7 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "date_format":          user_input["date_format"],
                     "include_time":         user_input["include_time"],
                     "bold_prefix":          user_input["bold_prefix"],
-                    "ignore_title_voice":   user_input.get("ignore_title_voice", False),
+                    "ignore_title_voice":   user_input["ignore_title_voice"],
                     "priority_volume":      float(user_input["priority_volume"]),
                     "person_entities":      user_input.get("person_entities", []),
                     "weekend_days":         [int(d) if isinstance(d, str) else d for d in user_input.get("weekend_days", ["5", "6"])],
@@ -371,7 +371,7 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
                 "date_format":          user_input["date_format"],
                 "include_time":         user_input["include_time"],
                 "bold_prefix":          user_input["bold_prefix"],
-                "ignore_title_voice":   user_input.get("ignore_title_voice", False),
+                "ignore_title_voice":   user_input["ignore_title_voice"],
                 "priority_volume":      float(user_input["priority_volume"]),
                 "person_entities":      user_input.get("person_entities", []),
                 "weekend_days":         [int(d) if isinstance(d, str) else d for d in user_input.get("weekend_days", ["5", "6"])],
