@@ -2,8 +2,18 @@
 a new release from an appdaemon app by @caiosweet and @jumping2000
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/jumping2000/universal_notifier?style=for-the-badge) 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/jumping2000/universal_notifier?style=for-the-badge)
 ![GitHub Release Date](https://img.shields.io/github/release-date/jumping2000/universal_notifier?style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/jumping2000/universal_notifier?style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/jumping2000/universal_notifier?style=for-the-badge)
+![License](https://img.shields.io/github/license/jumping2000/universal_notifier?style=for-the-badge)
+![HA integration](https://img.shields.io/badge/Home%20Assistant-Integration-blue?style=for-the-badge)
+
+> **🆕 Latest (v0.8.0):** Weekday/Weekend DND split, comma-separated multi-target support. See the [Changelog](CHANGELOG.md) for details.
+>
+> [User configuration Guide](USER_GUIDE.md)
+>
+> 🇮🇹 [Versione Italiana / Italian Version](README_IT.md)
 <!---
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-Yes-brightgreen.svg)](https://https://github.com/jumping2000/universal_notifier/graphs/commit-activity?style=for-the-badge)
 [![GitHub issues](https://img.shields.io/github/issues/jumping2000/universal_notifier)](https://github.com/jumping2000/universal_notifier/issues?style=for-the-badge)<br>
@@ -13,42 +23,11 @@ a new release from an appdaemon app by @caiosweet and @jumping2000
 
 ___
 
-**Universal Notifier** è un componente custom per Home Assistant che centralizza e potenzia la gestione delle notifiche.
-
-Trasforma semplici automazioni in un sistema di comunicazione "Smart Home" che conosce l'ora del giorno, rispetta il tuo sonno (DND), saluta in modo naturale e gestisce automaticamente il volume degli assistenti vocali.
-
-## 🚀 Caratteristiche Principali 🇮🇹
-
-* **Piattaforma Unificata:** Un solo servizio (`universal_notifier.send`) per Telegram, App Mobile, Alexa, Google Home, ecc.
-* **Notifiche personalizzate** a più destinatari (ad esempio, notifica di allarme sia a Telegram che ad Alexa)
-* **Voce vs Testo:** Distingue automaticamente tra messaggi da leggere (con prefissi `[Jarvis - 12:30]`) e messaggi da pronunciare (solo testo pulito).
-* **Time Slots & Volume Smart:** Imposta volumi diversi per Mattina, Pomeriggio, Sera e Notte. Il componente regola il volume *prima* di parlare.
-* **Do Not Disturb (DND):** Definisci un orario di silenzio per gli assistenti vocali. Le notifiche critiche (`priority: true`) passano comunque.
-* **Saluti Casuali:** "Buongiorno", "Buon pomeriggio", ecc., scelti casualmente da liste personalizzabili.
-* **Gestione Comandi:** Supporto nativo per comandi Companion App (es. `TTS`, `command_volume_level`) inviati in modalità "RAW".
-* **Coda Intelligente (FIFO):** Le notifiche vocali vengono gestite da un worker in background tramite asyncio.Queue. Questo impedisce la sovrapposizione audio riproducendo i messaggi in sequenza.
-* **Snapshot e Ripristino:** Il sistema salva lo stato (volume, traccia e app) dei lettori multimediali prima di una notifica e tenta di ripristinarlo dopo che l'intera coda è stata svuotata.
-
-### 📊 Monitoraggio & Diagnostica
-
-| Entità | Tipo | Descrizione |
-|:---|:---|:---|
-| **Volume** | Sensor | Mostra in tempo reale la percentuale di volume che verrà usata per la prossima notifica, calcolata automaticamente in base alla fascia oraria attiva. Icona dinamica in base al livello. Attributi extra: `current_slot`, `raw_volume`. |
-| **Family** | Sensor | Traccia lo stato di presenza della famiglia (`home` / `not_home`) in base alle entità `person` configurate. |
-| **DND** | Binary Sensor | Indica se la modalità "Non Disturbare" è attualmente attiva o inattiva. |
-| **Voice Buffer** | Number | Tempo di buffer regolabile (0.5–10.0 s, step 0.5) per la riproduzione TTS, per garantire la consegna completa del messaggio. Default: 1.5 s. |
-| **Priority Volume** | Select | Imposta il livello di volume per le notifiche prioritarie. Opzioni: da 0.1 a 1.0. |
-| **Text Format** | Select | Seleziona il formato di testo per le notifiche: `html` o `markdown`. |
-| **Notification Mode** | Select | Controlla l'instradamento delle notifiche in base alla presenza: `Normal` (tutte passano), `Voice home` (voce solo se in casa), `Text home` (solo testo, niente voce). |
-| **Default Media Players** | Sensor | Mostra i media player predefiniti configurati per i canali vocali. Stato: numero di canali con un default. Attributi: mappa `{alias_canale: media_player.xxx}`. |
-
-___
-
 **Universal Notifier** is a custom Home Assistant component that centralizes and enhances notification management.
 
 It transforms simple automations into a "Smart Home" communication system that knows the time of day, respects your sleep (Do Not Disturb - DND), greets naturally, and automatically manages the volume of voice assistants.
 
-## 🚀 Key Features 🇬🇧
+## 🚀 Key Features
 
 * **Unified Platform:** A single service (`universal_notifier.send`) for Telegram, Mobile App, Alexa, Google Home, etc.
 * **Personalized notifications** to several targets (i.e. alarm notification to both Telegram and Alexa)

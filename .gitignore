@@ -1,14 +1,14 @@
-# Home Assistant runtime data (generato dal dev container)
+# Home Assistant runtime data
 config/
 # Python
 __pycache__/
-# Claude
-.claude/
+# Copilot
+.github/copilot-instructions.md
 #devcontainer
 .devcontainer/
+#venv
+.venv
 # md files
 COMPLETE_GUIDE.md
 OLD_README.md
 docs/superpowers/
-.venv
-.github/copilot-instructions.md
