@@ -21,12 +21,11 @@ DEFAULT_TIME_SLOTS = {
     },
 }
 
-def estimate_tts_duration(text: str, buffer: float = 1.5) -> float:
+def estimate_tts_duration(text: str, buffer: float) -> float:
     """Stima la durata del messaggio in secondi basandosi sulle parole."""
     if not text: return 0
-    # Media: 2.5 parole al secondo circa (o 150 parole/minuto)
     words = len(text.split())
-    estimated_seconds = (words / 2.5) + buffer
+    estimated_seconds = (words / 1.5) + buffer
     return max(buffer + 2.0, estimated_seconds)
 
 def is_time_in_range(start_str: str, end_str: str, now_time) -> bool:
@@ -100,30 +99,35 @@ def clean_text_for_tts(text: str) -> str:
     text = re.sub(r'<[^>]+>', '', text)    # Via HTML tags
     text = re.sub(r'[*_`\[\]]', '', text) # Via markdown
     text = re.sub(r'http\S+', '', text)    # Via URL
-    # Via emoji/icon (preserva lettere accentate)
+    # Via emoji/icon (preserva lettere accentate latin-1)
     text = re.sub(
-        r'[\U0001F600-\U0001F64F'   # Emoticons
-        r'\U0001F300-\U0001F5FF'    # Simboli e pittogrammi
-        r'\U0001F680-\U0001F6FF'    # Trasporti e mappe
-        r'\U0001F900-\U0001F9FF'    # Supplementari
-        r'\U0001FA00-\U0001FA6F'    # Scacchi ecc.
-        r'\U0001FA70-\U0001FAFF'    # Oggetti estesi
-        r'\U00002702-\U000027B0'    # Dingbats
+        r'[\U00002100-\U000027BF'   # Simboli BMP: frecce, box drawing, geometrici, dingbats, ⏰⌨ etc.
+        r'\U00002B00-\U00002BFF'    # Misc Symbols & Arrows (⬜⬆⬇⬅➡)
+        r'\U00003000-\U0000303F'    # CJK Symbols (〇〒など)
+        r'\U00003200-\U000032FF'    # Enclosed CJK Letters (㋀㋁㋂)
         r'\U0000FE00-\U0000FE0F'    # Variation Selectors
         r'\U0000200D'               # Zero Width Joiner
-        r'\U00002600-\U000026FF'    # Simboli vari
-        r'\U00002700-\U000027BF'    # Dingbats
-        r'\U0000231A-\U0000231B'    # Orologio, clessidra
-        r'\U00002328'               # Tastiera
-        r'\U000023CF'               # Eject
-        r'\U000023E9-\U000023F3'    # Simboli media
-        r'\U000023F8-\U000023FA'    # Simboli media
+        r'\U000E0000-\U000E007F'    # Tag characters (flag subtags)
+        r'\U0001F000-\U0001FBFF'    # Simboli SMP: mahjong, carte, bandiere, emoticons, trasporti, ecc.
+        r'\U0001FC00-\U0001FFFF'    # Symbols Extended, compatibilità
         r']+', '', text)
     return re.sub(r'\s{2,}', ' ', text).strip()
 
 def sanitize_text_visual(text: str, parse_mode: str = None) -> str:
-    """Pulisce il testo per visualizzazione, preservando l'HTML dell'utente."""
+    """Pulisce il testo in base al parse_mode del canale."""
     if not text: return ""
+    mode = (parse_mode or "").lower()
+    if "html" in mode:
+        # HTML mode (mobile_app, telegram HTML): rimuove markdown, tiene HTML e icone
+        text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)   # **bold** → bold
+        text = re.sub(r'\*(.+?)\*', r'\1', text)         # *italic* → italic
+    elif "markdown" in mode:
+        # Markdown / MarkdownV2 mode (telegram): rimuove HTML, tiene markdown e icone
+        text = re.sub(r'<[^>]+>', '', text)
+    else:
+        # plain_text o None: rimuovi marker markdown che altrimenti restano visibili
+        text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)   # **bold** → bold
+        text = re.sub(r'\*(.+?)\*', r'\1', text)         # *italic* → italic
     return text
 
 def apply_formatting(text: str, parse_mode: str, style: str = "bold") -> str:
@@ -132,15 +136,18 @@ def apply_formatting(text: str, parse_mode: str, style: str = "bold") -> str:
     mode = parse_mode.lower() if parse_mode else ""
     if "html" in mode:
         if style == "bold": return f"<b>{text}</b>"
+    elif "markdownv2" in mode:
+        # Telegram MarkdownV2 usa * singolo per bold
+        if style == "bold": return f"*{text}*"
     elif "markdown" in mode:
         return f"**{text}**" 
     return text
 
 
 def escape_markdownv2(text: str) -> str:
-    """Escape caratteri speciali per Telegram MarkdownV2, preservando **bold** e *italic*."""
+    """Escape caratteri speciali per Telegram MarkdownV2, preservando **bold** → *bold* e *italic*."""
     if not text: return ""
-    special = r'\_*[]()~`>#+=|{}.!-'
+    special = r'\_[]()~`>#+=|{}.!-'
     saved = {}
     counter = [0]
 
@@ -150,10 +157,10 @@ def escape_markdownv2(text: str) -> str:
         inner = m.group(1)
         for ch in special:
             inner = inner.replace(ch, '\\' + ch)
-        saved[key] = f'**{inner}**'
+        saved[key] = f'*{inner}*'
         return key
 
-    # Protegge **bold** e *italic*
+    # Protegge **bold** (→ *bold*) e *italic*
     result = re.sub(r'\*\*(.+?)\*\*', _protect, text)
     result = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', _protect, result)
     # Escape di tutti i caratteri speciali rimasti
@@ -172,10 +179,10 @@ def normalize_parse_mode(parse_mode: str, srv_domain: str) -> str | None:
     pm = parse_mode.strip()
     if srv_domain == "telegram_bot":
         low = pm.lower()
-        if low == "html":
-            return "HTML"
-        if low in ("markdown", "markdownv2"):
-            return "MarkdownV2"
-        return pm
+        # [0.8.1] Fix: HA ora valida parse_mode strict lowercase.
+        # Valori validi: html, markdown, markdownv2, plain_text.
+        # Qualsiasi altro valore → fallback a "html".
+        VALID = ("html", "markdown", "markdownv2", "plain_text")
+        return low if low in VALID else "html"
     else:
         return pm.lower()

@@ -39,7 +39,7 @@ It transforms simple automations into a "Smart Home" communication system that k
 * **Intelligent Queueing (FIFO):** Voice notifications are handled by a background worker using asyncio.Queue. This prevents audio overlapping by playing messages sequentially.
 * **Snapshot & Resume:** The system saves the state (volume, track, and app) of media players before a notification and tries to restore it after the entire queue is empty.
 
-### 📊 Monitoring & Diagnostics
+### 📊 Monitoring & Diagnostics - Entities
 
 | Entity | Type | Description |
 |:---|:---|:---|
@@ -51,6 +51,8 @@ It transforms simple automations into a "Smart Home" communication system that k
 | **Text Format** | Select | Selects the text formatting mode for notifications: `html` or `markdown`. |
 | **Notification Mode** | Select | Controls notification routing based on presence: `Normal` (all go through), `Voice home` (voice only when home), `Text home` (text only, no voice). |
 | **Default Media Players** | Sensor | Shows the default media players configured for voice channels. State: number of channels with a default. Attributes: map `{channel_alias: media_player.xxx}`. |
+| **DND Override** | Switch | Forces Do Not Disturb on regardless of the time-based schedule. Useful for manually enabling quiet mode at any time. |
+| **Last Message Sent** | Text | Stores the raw text of the last notification sent (max 255 characters). Updated automatically after each `universal_notifier.send` call. |
 
 ___
 
@@ -171,6 +173,7 @@ After initial setup, go to **Settings > Devices & Services > Universal Notifier 
 |priority|bool|No|If true, bypasses DND and sets high volume (default 0.9).|
 |skip_greeting|bool|No|If true, does not add the time-based greeting (e.g., Good Morning).|
 |include_time|bool|No|Overrides the configuration to include/exclude the time in the visual prefix.|
+|ignore_title_voice|bool|No|If true, ignores the title for voice notifications (TTS/notify voice channels).|
 |bold_prefix|bool|No|Overrides the configuration to have assistant name and time in bold|
 |assistant_name|string|No|Overrides the global assistant name.|
 |override_greetings|dict|No|Overrides the default greetings.| 

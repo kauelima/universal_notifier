@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.1] - 2026-06-14
+
+### Fixed
+- **Telegram parse modes**: MarkdownV2 bold: `**bold**` correctly converted to `*bold*` per Telegram spec. `plain_text` strips `**bold**`/`*italic*` markers instead of showing them literally. `parse_mode` removed from notify service `data` (unsupported by `mobile_app`).
+- **Volume resume when media player is idle**: When a media player is idle/off at notification time, the snapshot captures `volume_level=None`. Previously, the resume phase would try to restore `None`, producing a no-op. Now it falls back to the target volume used during the notification.
+- **Select entities persist across restarts**: `PriorityVolumeSelect`, `TextFormatSelect`, and `NotificationModeSelect` now use `RestoreEntity` to survive HA reboots.
+
 ## [0.8.0] - 2026-06-13
 
 ### Added

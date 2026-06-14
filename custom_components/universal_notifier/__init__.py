@@ -91,19 +91,13 @@ async def _get_player_snapshot(hass: HomeAssistant, entity_id: str) -> dict:
 async def _apply_resume(hass: HomeAssistant, entity_id: str, target_volume: float):
     """Ripristina lo stato salvato all'inizio della sessione."""
     snap = _ORIGINAL_STATES.pop(entity_id, None)
-    if not snap:
-        await hass.services.async_call("media_player", "volume_set", {
-            "entity_id": entity_id, "volume_level": target_volume
-        })
-        return
-    # 1. Ripristino Volume
-    if snap["volume"] is not None:
-        await hass.services.async_call("media_player", "volume_set", {
-            "entity_id": entity_id, "volume_level": snap["volume"]
-        })
-    _LOGGER.debug(f"UniNotifier: Resume del volume di {entity_id} con {snap['volume']}")
-    # 2. Ripristino Contenuto (solo se stava suonando prima della prima notifica)
-    if snap["state"] == STATE_PLAYING:
+    restore_volume = (snap["volume"] if snap and snap["volume"] is not None else target_volume)
+    await hass.services.async_call("media_player", "volume_set", {
+        "entity_id": entity_id, "volume_level": restore_volume
+    })
+    _LOGGER.debug(f"UniNotifier: Resume del volume di {entity_id} con {restore_volume}")
+    # Ripristino Contenuto (solo se stava suonando prima della prima notifica)
+    if snap and snap["state"] == STATE_PLAYING:
         app = (snap.get("app_name") or "").lower()
         c_id = snap.get("media_content_id")
         try:
@@ -183,7 +177,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     ############################################################################
     async def voice_queue_worker():
-        """Lavoratore in background che consuma la coda vocale."""
+        """Worker in background che consuma la coda vocale."""
         _LOGGER.debug("UniNotifier: Voice Queue Worker avviato.")
         while True:
             task = await voice_queue.get()
@@ -389,7 +383,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         final_msg = f"{clean_prefix} {greeting_part}{clean_msg}"
 
             # Escape MarkdownV2 special chars for Telegram
-            if not is_voice_channel and parse_mode == "MarkdownV2":
+            if not is_voice_channel and parse_mode == "markdownv2":
                 final_msg = escape_markdownv2(final_msg)
                 if final_title:
                     final_title = escape_markdownv2(final_title)
@@ -482,6 +476,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     service_payload["data"].update(all_additional_data)
                 else:
                     service_payload.update(all_additional_data)
+            # CHECK
+            # if "data" in service_payload and isinstance(service_payload["data"], dict):
+            #   service_payload["data"].pop("parse_mode", None)
+            #
             if not is_voice_channel and not is_command_message and srv_domain == "notify" and parse_mode:
                 if "data" not in service_payload:
                     service_payload["data"] = {}
@@ -508,6 +506,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     # Per TTS: dynamic_entities contiene il target TTS (tts.xxx),
                     # media_player_entity_id indica dove riprodurre l'audio
                     tts_media_players = specific_data.pop("media_player_entity_id", None)
+                    if not tts_media_players and dynamic_entities:
+                        # entity_id in target_data può contenere media_player da usare
+                        tts_media_players = [e for e in dynamic_entities if isinstance(e, str) and e.startswith("media_player.")]
                     if not tts_media_players and default_mp:
                         tts_media_players = [default_mp]
                     if tts_media_players:
@@ -516,17 +517,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         service_payload["media_player_entity_id"] = tts_media_players
                         physical_players.extend(tts_media_players)
                 elif srv_domain == "notify":
-                    notify_targets = ""
                     if dynamic_entities:
                         notify_targets = dynamic_entities
                     elif default_mp:
                         notify_targets = [default_mp]
                     else:
-                        notify_targets = channel_conf.get(CONF_TARGET, [])
+                        notify_targets = channel_conf.get(CONF_TARGET) or []
                     if isinstance(notify_targets, str):
-                        physical_players.append(notify_targets)
-                    else:
-                        physical_players.extend(notify_targets)
+                        notify_targets = [notify_targets]
+                    physical_players.extend(notify_targets)
+                    service_payload[CONF_TARGET] = notify_targets
                 physical_players = [p for p in physical_players if isinstance(p, str) and p.startswith("media_player.")]
                 _LOGGER.debug(f"UniNotifier: Media players coinvolti {physical_players}.")
                 queue_item = {

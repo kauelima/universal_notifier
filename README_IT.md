@@ -36,7 +36,7 @@ Trasforma semplici automazioni in un sistema di comunicazione "Smart Home" che c
 * **Coda Intelligente (FIFO):** Le notifiche vocali vengono gestite da un worker in background tramite asyncio.Queue. Questo impedisce la sovrapposizione audio riproducendo i messaggi in sequenza.
 * **Snapshot e Ripristino:** Il sistema salva lo stato (volume, traccia e app) dei lettori multimediali prima di una notifica e tenta di ripristinarlo dopo che l'intera coda è stata svuotata.
 
-### 📊 Monitoraggio & Diagnostica
+### 📊 Monitoraggio & Diagnostica - Entità
 
 | Entità | Tipo | Descrizione |
 |:---|:---|:---|
@@ -48,6 +48,8 @@ Trasforma semplici automazioni in un sistema di comunicazione "Smart Home" che c
 | **Text Format** | Select | Seleziona il formato di testo per le notifiche: `html` o `markdown`. |
 | **Notification Mode** | Select | Controlla l'instradamento delle notifiche in base alla presenza: `Normal` (tutte passano), `Voice home` (voce solo se in casa), `Text home` (solo testo, niente voce). |
 | **Default Media Players** | Sensor | Mostra i media player predefiniti configurati per i canali vocali. Stato: numero di canali con un default. Attributi: mappa `{alias_canale: media_player.xxx}`. |
+| **DND Override** | Switch | Forza la modalità "Non Disturbare" indipendentemente dall'orario programmato. Utile per attivare manualmente la modalità silenziosa in qualsiasi momento. |
+| **Last Message Sent** | Text | Memorizza il testo dell'ultima notifica inviata (max 255 caratteri). Aggiornato automaticamente ad ogni chiamata a `universal_notifier.send`. |
 
 ___
 
@@ -167,6 +169,7 @@ Dopo la configurazione iniziale, vai in **Impostazioni > Dispositivi e servizi >
 |priority|bool|No|Se true, ignora il DND e imposta volume alto (default 0.9).|
 |skip_greeting|bool|No|Se true, non aggiunge il saluto basato sull'ora (es. Buongiorno).|
 |include_time|bool|No|Sovrascrive la configurazione per includere/escludere l'ora nel prefisso visivo.|
+|ignore_title_voice|bool|No|Se true, ignora il titolo per le notifiche vocali (TTS/canali voice).|
 |bold_prefix|bool|No|Sovrascrive la configurazione per mettere in grassetto nome assistente e ora.|
 |assistant_name|string|No|Sovrascrive il nome globale dell'assistente.|
 |override_greetings|dict|No|Sovrascrive i saluti predefiniti.|

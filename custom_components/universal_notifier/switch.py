@@ -31,4 +31,4 @@ class UNotifierDNDOverrideSwitch(SwitchEntity):
 
     @property
     def icon(self) -> str:
-        return "mdi:bell-off" if self.is_on else "mdi:bell-ring"
+        return "mdi:bell-sleep" if self.is_on else "mdi:bell"
