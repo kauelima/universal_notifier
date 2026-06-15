@@ -290,14 +290,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 _LOGGER.debug(f"UniNotifier: Target '{target_alias}' sconosciuto.")
                 continue
             channel_conf = channels_config[target_alias]
-            _LOGGER.debug(f"UniNotifier: Channel Configuration {channel_conf}")
+            _LOGGER.debug(f"UniNotifier: START, Channel Configuration {channel_conf}")
 
             ####################################################################
             # A. Preparazione Dati Specifici
             specific_data = {}
             if target_alias in target_specific_data:
                 specific_data = target_specific_data[target_alias].copy()
-            _LOGGER.debug(f"UniNotifier: Specific Data {specific_data}")
+            _LOGGER.debug(f"UniNotifier: Sezione A, Specific Data {specific_data}")
             target_raw_message = specific_data.pop(CONF_MESSAGE, global_raw_message)
 
             dynamic_entities = specific_data.pop(CONF_ENTITY_ID, channel_conf.get(CONF_TARGET))
@@ -305,14 +305,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 dynamic_entities = [e.strip() for e in dynamic_entities.split(",") if e.strip()]
             elif dynamic_entities is None:
                 dynamic_entities = []
-            _LOGGER.debug(f"UniNotifier: Dynamic Entities {dynamic_entities}")
+            _LOGGER.debug(f"UniNotifier: Sezione A, Dynamic Entities {dynamic_entities}")
 
             ####################################################################
             # B. Selezione Servizio
             service_type = specific_data.pop(CONF_TYPE, runtime_data.get(CONF_TYPE, None))
             alt_services_conf = channel_conf.get(CONF_ALT_SERVICES, {})
-            _LOGGER.debug(f"UniNotifier: Service type {service_type}")
-            _LOGGER.debug(f"UniNotifier: Service alt {alt_services_conf}")
+            _LOGGER.debug(f"UniNotifier: Sezione B, Service type {service_type}")
+            _LOGGER.debug(f"UniNotifier: Sezione B, Service alt {alt_services_conf}")
 
             if service_type and service_type in alt_services_conf:
                 target_service_conf = alt_services_conf[service_type]
@@ -321,12 +321,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             else:
                 full_service_name = channel_conf[CONF_SERVICE]
                 is_voice_channel = channel_conf.get(CONF_IS_VOICE, False)
-            _LOGGER.debug(f"UniNotifier: Full Service Name {full_service_name}")
+            _LOGGER.debug(f"UniNotifier: Sezione B, Full Service Name {full_service_name}")
 
             try:
                 srv_domain, srv_name = full_service_name.split(".", 1)
             except ValueError:
-                _LOGGER.error(f"UniNotifier: Servizio non valido {full_service_name}")
+                _LOGGER.error(f"UniNotifier: Sezione B, Servizio non valido {full_service_name}")
                 continue
 
             ####################################################################
@@ -334,6 +334,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             is_command_message = False
             if target_raw_message in COMPANION_COMMANDS or str(target_raw_message).startswith("command_"):
                 is_command_message = True
+            _LOGGER.debug(f"UniNotifier: Sezione C, Is Command Message {is_command_message}")
 
             ####################################################################
             # D. COSTRUZIONE MESSAGGIO E TITOLO
@@ -387,6 +388,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 final_msg = escape_markdownv2(final_msg)
                 if final_title:
                     final_title = escape_markdownv2(final_title)
+            _LOGGER.debug(f"UniNotifier: Sezione D, Final message '{final_msg}'")
 
             ####################################################################
             # E. Determinazione del Volume attuale
@@ -403,7 +405,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # F. Applicazione Volume e Check DND (Solo Canali Voce)
             if is_voice_channel:
                 if is_dnd_active and not is_priority and override_volume is None:
-                    _LOGGER.debug(f"UniNotifier: Skipped '{target_alias}' (DND attivo)")
+                    _LOGGER.debug(f"UniNotifier: Sezione F, Skipped '{target_alias}' (DND attivo)")
                     continue
 
             ####################################################################
@@ -415,20 +417,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     family_state = hass.states.get(f"sensor.{DOMAIN}_family")
                     family_home = family_state is not None and family_state.state == "home"
                     if family_home and not is_voice_channel:
-                        _LOGGER.debug(f"UniNotifier: Skipped '{target_alias}' (Voice home, family a casa → solo voce)")
+                        _LOGGER.debug(f"UniNotifier: Sezione F2, Skipped '{target_alias}' (Voice home, family a casa → solo voce)")
                         continue
                     elif not family_home and is_voice_channel:
-                        _LOGGER.debug(f"UniNotifier: Skipped '{target_alias}' (Voice home, family non a casa → solo testo)")
+                        _LOGGER.debug(f"UniNotifier: Sezione F2, Skipped '{target_alias}' (Voice home, family non a casa → solo testo)")
                         continue
                 elif notification_mode == "Text home":
                     if is_voice_channel:
-                        _LOGGER.debug(f"UniNotifier: Skipped '{target_alias}' (Text home mode)")
+                        _LOGGER.debug(f"UniNotifier: Sezione F2, Skipped '{target_alias}' (Text home mode)")
                         continue
 
             ####################################################################
             # G. Costruzione Payload Finale
             service_payload = {}
-            _LOGGER.debug(f"UniNotifier: final_title '{final_title}' ")
+            _LOGGER.debug(f"UniNotifier: Sezione G, final_title '{final_title}' ")
             if srv_domain == "telegram_bot":
                 if "parse_mode" not in service_payload and parse_mode:
                     service_payload["parse_mode"] = parse_mode
@@ -443,6 +445,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if service_type in ["photo", "video", "animation", "voice", "document"]:
                     service_payload["caption"] = final_title + " " + final_msg
                     service_payload.pop("title", None)
+            _LOGGER.debug(f"UniNotifier: Sezione G, service_payload '{service_payload}' ")
 
             ####################################################################
             # H. Routing dei Target nel Payload
@@ -462,6 +465,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     service_payload[CONF_CHAT_ID] = conf_target_value
                 else:
                     service_payload[CONF_TARGET] = conf_target_value
+            _LOGGER.debug(f"UniNotifier: Sezione H, service_payload '{service_payload}' ")
 
             ####################################################################
             # I. Merge Dati Accessori (alexa type, telegram images, etc.)
@@ -476,6 +480,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     service_payload["data"].update(all_additional_data)
                 else:
                     service_payload.update(all_additional_data)
+            _LOGGER.debug(f"UniNotifier: Sezione I, service_payload '{service_payload}' ")
             # CHECK
             # if "data" in service_payload and isinstance(service_payload["data"], dict):
             #   service_payload["data"].pop("parse_mode", None)
@@ -497,9 +502,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 for chat_id in notify_targets:
                     p = service_payload.copy()
                     p[CONF_CHAT_ID] = str(chat_id)
-                    _LOGGER.debug(f"UniNotifier: Telegram to chat_id={chat_id} payload {p}")
+                    _LOGGER.debug(f"UniNotifier: Sezione J, Telegram to chat_id={chat_id} payload {p}")
                     tasks.append(hass.services.async_call(srv_domain, srv_name, p))
-
             elif is_voice_channel:
                 default_mp = channel_conf.get(CONF_DEFAULT_MEDIA_PLAYER, "")
                 if srv_domain == "tts":
@@ -528,7 +532,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     physical_players.extend(notify_targets)
                     service_payload[CONF_TARGET] = notify_targets
                 physical_players = [p for p in physical_players if isinstance(p, str) and p.startswith("media_player.")]
-                _LOGGER.debug(f"UniNotifier: Media players coinvolti {physical_players}.")
+                _LOGGER.debug(f"UniNotifier: Sezione J, Media players coinvolti {physical_players}.")
                 queue_item = {
                     'domain': srv_domain,
                     'service': srv_name,
@@ -538,9 +542,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     'target_volume': target_volume
                 }
                 voice_queue.put_nowait(queue_item)
-                _LOGGER.debug(f"UniNotifier: Messaggio per {target_alias} accodato.")
+                _LOGGER.debug(f"UniNotifier: Sezione J, Messaggio per {target_alias} accodato.")
             else:
-                _LOGGER.debug(f"UniNotifier: Final payload {service_payload} - Service data {srv_domain}/{srv_name}")
+                _LOGGER.debug(f"UniNotifier: Sezione J, Final payload {service_payload} - Service data {srv_domain}/{srv_name}")
                 tasks.append(hass.services.async_call(srv_domain, srv_name, service_payload))
 
         if tasks:

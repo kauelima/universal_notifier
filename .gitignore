@@ -7,7 +7,9 @@ __pycache__/
 #devcontainer
 .devcontainer/
 #venv
-.venv
+.venv/
+#.vscode
+.vscode/
 # md files
 COMPLETE_GUIDE.md
 OLD_README.md
