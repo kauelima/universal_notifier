@@ -1,0 +1,49 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Test: Run All",
+            "type": "shell",
+            "command": "uv",
+            "args": [
+                "run",
+                "pytest",
+                "tests/",
+                "-v"
+            ],
+            "group": "test",
+            "problemMatcher": [],
+            "detail": "Run all tests with verbose output"
+        },
+        {
+            "label": "Test: Coverage",
+            "type": "shell",
+            "command": "uv",
+            "args": [
+                "run",
+                "pytest",
+                "tests/",
+                "--cov",
+                "--cov-report=term-missing"
+            ],
+            "group": "test",
+            "problemMatcher": [],
+            "detail": "Run tests with coverage report (missing lines)"
+        },
+        {
+            "label": "Test: HTML Report",
+            "type": "shell",
+            "command": "uv",
+            "args": [
+                "run",
+                "pytest",
+                "tests/",
+                "--cov",
+                "--cov-report=html"
+            ],
+            "group": "test",
+            "problemMatcher": [],
+            "detail": "Generate HTML coverage report in htmlcov/"
+        }
+    ]
+}
