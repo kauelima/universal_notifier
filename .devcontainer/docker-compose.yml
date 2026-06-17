@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  homeassistant:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    image: homeassistant/home-assistant:stable
+    container_name: universal_notifier_ha_dev
+
+    volumes:
+      # Cartella config HA (configuration.yaml, .storage, db, ecc.)
+      - ../config:/config
+
+      # Il repo root contiene __init__.py, manifest.json, ecc.
+      # Docker monta questa path SOPRA /config/custom_components/universal_notifier/
+      # → ogni salvataggio in VS Code è immediatamente visibile ad HA, senza rebuild
+      - ../custom_components/universal_notifier:/config/custom_components/universal_notifier
+
+      # Workspace VS Code (per aprire i file nell'editor)
+      - ..:/workspace
+
+    ports:
+      - "8123:8123"
+
+    environment:
+      TZ: Europe/Rome
+
+    # restart: "no" è intenzionale in dev:
+    # se HA crasha durante lo sviluppo non si riavvia in loop
+    restart: "no"
+
+  # Optional: run tests in an isolated Docker container.
+  # Primary workflow uses "uv run pytest" locally or VS Code tasks.
+  # Usage: docker compose run test-runner
+  test-runner:
+    container_name: universal_notifier_test
+    build:
+      context: ..
+      dockerfile: tests/Dockerfile.test
+    volumes:
+      - ..:/workspaces/universal_notifier
+    command: uv run pytest
+    working_dir: /workspaces/universal_notifier
