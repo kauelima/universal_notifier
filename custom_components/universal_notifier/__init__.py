@@ -1,38 +1,31 @@
 # /config/custom_components/universal_notifier/__init__.py
 
+import asyncio
 import logging
+import math
 import random
 import re
-import asyncio
-import math
+
 import voluptuous as vol
-from homeassistant.helpers import config_validation as cv
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import (ATTR_ENTITY_ID, CONF_SERVICE, CONF_TYPE,
+                                 STATE_PLAYING)
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.const import ATTR_ENTITY_ID, STATE_PLAYING, CONF_SERVICE, CONF_TYPE
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
-from homeassistant.config_entries import ConfigEntry
+
+from .const import (  # Config keys; Service keys (Inputs); Inner Channel keys; Entity IDs (auto-created); Other
+    COMPANION_COMMANDS, CONF_ALT_SERVICES, CONF_ASSISTANT_NAME,
+    CONF_BOLD_PREFIX, CONF_CHANNELS, CONF_CHAT_ID, CONF_DATA, CONF_DATE_FORMAT,
+    CONF_DEFAULT_MEDIA_PLAYER, CONF_DND, CONF_ENTITY_ID, CONF_GREETINGS,
+    CONF_IGNORE_TITLE_VOICE, CONF_INCLUDE_TIME, CONF_IS_VOICE, CONF_MESSAGE,
+    CONF_OVERRIDE_GREETINGS, CONF_PERSON_ENTITIES, CONF_PRIORITY,
+    CONF_PRIORITY_VOLUME, CONF_SERVICE, CONF_SKIP_GREETING, CONF_TARGET,
+    CONF_TARGET_DATA, CONF_TARGETS, CONF_TIME_SLOTS, CONF_TITLE, CONF_TYPE,
+    DOMAIN, ENTITY_DND_OVERRIDE, ENTITY_LAST_MESSAGE, PLATFORMS)
 ####
 from .utils import *
-from .const import (
-    DOMAIN,
-    PLATFORMS,
-    # Config keys
-    CONF_CHANNELS, CONF_ASSISTANT_NAME, CONF_DATE_FORMAT,
-    CONF_GREETINGS, CONF_TIME_SLOTS, CONF_DND, CONF_BOLD_PREFIX,
-    CONF_IGNORE_TITLE_VOICE,
-    # Service keys (Inputs)
-    CONF_MESSAGE, CONF_TITLE, CONF_TARGETS, CONF_DATA, CONF_TARGET_DATA,
-    CONF_PRIORITY, CONF_SKIP_GREETING, CONF_INCLUDE_TIME, CONF_PRIORITY_VOLUME, CONF_OVERRIDE_GREETINGS,
-    CONF_PERSON_ENTITIES,
-    # Inner Channel keys
-    CONF_SERVICE, CONF_TARGET, CONF_ENTITY_ID, CONF_CHAT_ID,
-    CONF_IS_VOICE, CONF_ALT_SERVICES, CONF_TYPE, CONF_DEFAULT_MEDIA_PLAYER,
-    # Entity IDs (auto-created)
-    ENTITY_LAST_MESSAGE, ENTITY_DND_OVERRIDE,
-    # Other
-    COMPANION_COMMANDS,
-)
 
 _LOGGER = logging.getLogger(__name__)
 # Dizionario globale per tracciare gli stati originali fuori dal worker
@@ -450,20 +443,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             ####################################################################
             # H. Routing dei Target nel Payload
             conf_target_value = channel_conf.get(CONF_TARGET)
+            if conf_target_value is not None:
+                # Normalize: always produce list[str] regardless of input type
+                if not isinstance(conf_target_value, list):
+                    if isinstance(conf_target_value, str) and "," in conf_target_value:
+                        conf_target_value = [s.strip() for s in conf_target_value.split(",") if s.strip()]
+                    else:
+                        conf_target_value = [conf_target_value]
+                conf_target_value = [str(x) for x in conf_target_value]
             if conf_target_value:
-                # Normalize comma-separated target to list
-                if isinstance(conf_target_value, str) and "," in conf_target_value:
-                    conf_target_value = [s.strip() for s in conf_target_value.split(",") if s.strip()]
                 if srv_domain == "tts":
                     service_payload[ATTR_ENTITY_ID] = conf_target_value
-                elif srv_domain == "telegram_bot":
-                    # Telegram requires int chat_id
-                    if isinstance(conf_target_value, list):
-                        conf_target_value = [int(x) for x in conf_target_value]
-                    else:
-                        conf_target_value = int(conf_target_value)
-                    service_payload[CONF_CHAT_ID] = conf_target_value
-                else:
+                elif srv_domain != "telegram_bot":
+                    # Telegram gestito da Sezione J (iterazione per chat_id)
                     service_payload[CONF_TARGET] = conf_target_value
             _LOGGER.debug(f"UniNotifier: Sezione H, service_payload '{service_payload}' ")
 
@@ -481,10 +473,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 else:
                     service_payload.update(all_additional_data)
             _LOGGER.debug(f"UniNotifier: Sezione I, service_payload '{service_payload}' ")
-            # CHECK
-            # if "data" in service_payload and isinstance(service_payload["data"], dict):
-            #   service_payload["data"].pop("parse_mode", None)
-            #
             if not is_voice_channel and not is_command_message and srv_domain == "notify" and parse_mode:
                 if "data" not in service_payload:
                     service_payload["data"] = {}
@@ -494,16 +482,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             physical_players = []
             # J. DISPATCH LOGIC: CODA PER VOCE vs IMMEDIATO
             if srv_domain == "telegram_bot":
-                notify_targets = channel_conf.get(CONF_TARGET, [])
-                if isinstance(notify_targets, str):
-                    notify_targets = [s.strip() for s in notify_targets.split(",") if s.strip()]
-                if not isinstance(notify_targets, list):
-                    notify_targets = [notify_targets]
-                for chat_id in notify_targets:
-                    p = service_payload.copy()
-                    p[CONF_CHAT_ID] = str(chat_id)
-                    _LOGGER.debug(f"UniNotifier: Sezione J, Telegram to chat_id={chat_id} payload {p}")
-                    tasks.append(hass.services.async_call(srv_domain, srv_name, p))
+                if conf_target_value:
+                    for chat_id in conf_target_value:
+                        p = service_payload.copy()
+                        p[CONF_CHAT_ID] = int(chat_id)
+                        _LOGGER.debug(f"UniNotifier: Sezione J, Telegram to chat_id={chat_id} payload {p}")
+                        tasks.append(hass.services.async_call(srv_domain, srv_name, p))
             elif is_voice_channel:
                 default_mp = channel_conf.get(CONF_DEFAULT_MEDIA_PLAYER, "")
                 if srv_domain == "tts":
@@ -526,9 +510,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     elif default_mp:
                         notify_targets = [default_mp]
                     else:
-                        notify_targets = channel_conf.get(CONF_TARGET) or []
-                    if isinstance(notify_targets, str):
-                        notify_targets = [notify_targets]
+                        notify_targets = conf_target_value or []
                     physical_players.extend(notify_targets)
                     service_payload[CONF_TARGET] = notify_targets
                 physical_players = [p for p in physical_players if isinstance(p, str) and p.startswith("media_player.")]

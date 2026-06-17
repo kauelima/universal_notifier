@@ -1,5 +1,6 @@
 # /config/custom_components/universal_notifier/utils.py
 import re
+
 from homeassistant.util import dt as dt_util
 
 # ==============================================================================
@@ -38,8 +39,8 @@ def is_time_in_range(start_str: str, end_str: str, now_time) -> bool:
         return start <= now_time or now_time <= end
 
 def get_current_slot_info(slots_conf: dict, now_time,
-                          now_weekday: int = None,
-                          weekend_days: list = None) -> tuple:
+                          now_weekday: int,
+                          weekend_days: list) -> tuple:
     """Restituisce (nome_slot, volume) basandosi sull'ora attuale e giorno."""
     # Se la config è vuota, usiamo i default
     if not slots_conf:
@@ -113,7 +114,7 @@ def clean_text_for_tts(text: str) -> str:
         r']+', '', text)
     return re.sub(r'\s{2,}', ' ', text).strip()
 
-def sanitize_text_visual(text: str, parse_mode: str = None) -> str:
+def sanitize_text_visual(text: str, parse_mode: str) -> str:
     """Pulisce il testo in base al parse_mode del canale."""
     if not text: return ""
     mode = (parse_mode or "").lower()

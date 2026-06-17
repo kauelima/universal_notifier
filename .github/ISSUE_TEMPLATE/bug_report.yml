@@ -1,5 +1,6 @@
 name: Report an issue with Universal Notifier
 description: Report a malfunction, unexpected behavior, or other issue with Universal Notifier.
+labels: "bug"
 body:
   - type: markdown
     attributes:
@@ -38,6 +39,7 @@ body:
       label: What version of Home Assistant are you using?
       description: >
         Can be found in: [**Settings** > **About**](https://my.home-assistant.io/redirect/info/).
+        
   - type: textarea
     validations:
       required: true
@@ -51,8 +53,27 @@ body:
         Tip: You can paste screenshot in this field too! 📸
 
   - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: What is your channels configuration for Universal Notifier?
+      description: |
+        Please provide your configuration for Universal Notifier. You can find it in
+        [**Integrations** > **Universal Notifier**](https://my.home-assistant.io/redirect/integrations).
+
+  - type: textarea
+    validations:
+      required: true
+    attributes:
+      label: What actions did you take in the developer tools?
+      description: |
+        [**Developer Tools** > **YAML**](https://my.home-assistant.io/redirect/developer_services/).
+
+  - type: textarea
+    validations:
+      required: true
     attributes:
       label: Anything in the logs? Paste it here!
       description: |
-        Be sure to check your [Home Assistant logs](https://my.home-assistant.io/redirect/logs/) for anything that might be related and helpful to include. Paste them here!
+        Be sure to check your [**Home Assistant logs**](https://my.home-assistant.io/redirect/logs/) for anything that might be related and helpful to include. Paste them here!
       render: plain text
