@@ -103,6 +103,13 @@ send:
       selector:
         boolean:
 
+    ignore_title_voice:
+      name: Ignore Title Voice
+      description: If active, ignores the title for voice notifications.
+      required: false
+      selector:
+        boolean:
+
     override_greetings:
       name: Override Greetings
       description: Dictionary to override the default greetings for a specific time slot.

@@ -1,0 +1,16 @@
+FROM python:3.14-slim
+
+RUN pip install --no-cache-dir uv
+
+WORKDIR /workspaces/universal_notifier
+
+COPY pyproject.toml ./
+
+# Install all dependencies (including dev/test)
+RUN uv sync --no-install-project
+
+# Copy source
+COPY . .
+
+# Install the project itself
+RUN uv sync

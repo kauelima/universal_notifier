@@ -1,0 +1,48 @@
+name: Auto Release
+
+on:
+  workflow_run:
+    workflows: ["Test"]
+    branches: [main]
+    types:
+      - completed
+
+jobs:
+  auto-release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current version from manifest
+        id: version
+        run: |
+          VERSION=$(python3 -c "
+          import json
+          with open('custom_components/universal_notifier/manifest.json') as f:
+              print(json.load(f)['version'])
+          ")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release
+        if: steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false

@@ -11,22 +11,34 @@
           "bold_prefix":     "Prefisso messaggio in grassetto",
           "priority_volume": "Volume prioritario (0.0 - 1.0)",
           "person_entities": "Entità persona (opzionale, per rilevamento presenza)",
-          "dnd_start":       "Inizio Non Disturbare (HH:MM)",
-          "dnd_end":         "Fine Non Disturbare (HH:MM)"
+          "weekday_dnd_start": "Inizio DND feriali (HH:MM)",
+          "weekday_dnd_end":   "Fine DND feriali (HH:MM)",
+          "weekend_dnd_start": "Inizio DND weekend (HH:MM)",
+          "weekend_dnd_end":   "Fine DND weekend (HH:MM)",
+          "ignore_title_voice": "Ignora titolo nei messaggi vocali",
+          "weekend_days": "Giorni weekend"
         }
       },
       "time_slots": {
         "title": "Fasce orarie",
-        "description": "Imposta l'orario di inizio e il volume TTS per ciascuna fascia oraria.",
+        "description": "Imposta l'orario di inizio e il volume TTS per ciascuna fascia oraria. Feriale e Weekend possono avere impostazioni diverse.",
         "data": {
-          "morning_start":    "Inizio mattina",
-          "morning_volume":   "Volume mattina",
-          "afternoon_start":  "Inizio pomeriggio",
-          "afternoon_volume": "Volume pomeriggio",
-          "evening_start":    "Inizio sera",
-          "evening_volume":   "Volume sera",
-          "night_start":      "Inizio notte",
-          "night_volume":     "Volume notte"
+          "weekday_morning_start":    "Feriale - Inizio mattina",
+          "weekday_morning_volume":   "Feriale - Volume mattina",
+          "weekday_afternoon_start":  "Feriale - Inizio pomeriggio",
+          "weekday_afternoon_volume": "Feriale - Volume pomeriggio",
+          "weekday_evening_start":    "Feriale - Inizio sera",
+          "weekday_evening_volume":   "Feriale - Volume sera",
+          "weekday_night_start":      "Feriale - Inizio notte",
+          "weekday_night_volume":     "Feriale - Volume notte",
+          "weekend_morning_start":    "Weekend - Inizio mattina",
+          "weekend_morning_volume":   "Weekend - Volume mattina",
+          "weekend_afternoon_start":  "Weekend - Inizio pomeriggio",
+          "weekend_afternoon_volume": "Weekend - Volume pomeriggio",
+          "weekend_evening_start":    "Weekend - Inizio sera",
+          "weekend_evening_volume":   "Weekend - Volume sera",
+          "weekend_night_start":      "Weekend - Inizio notte",
+          "weekend_night_volume":     "Weekend - Volume notte"
         }
       },
       "greetings": {
@@ -83,29 +95,41 @@
           "include_time":    "Includi l'orario nel prefisso del messaggio",
           "bold_prefix":     "Prefisso messaggio in grassetto",
           "priority_volume": "Volume prioritario (0.0 - 1.0)",
-          "person_entities": "Entità persona (opzionale, per rilevamento presenza)"
+          "person_entities": "Entità persona (opzionale, per rilevamento presenza)",
+          "ignore_title_voice": "Ignora titolo nei messaggi vocali",
+          "weekend_days": "Giorni weekend"
         }
       },
       "dnd": {
         "title": "Non Disturbare",
         "description": "Le notifiche vocali vengono soppresse in questa finestra oraria (salvo priority=true).",
         "data": {
-          "dnd_start": "Inizio Non Disturbare (HH:MM)",
-          "dnd_end":   "Fine Non Disturbare (HH:MM)"
+          "weekday_dnd_start": "Inizio DND feriali (HH:MM)",
+          "weekday_dnd_end":   "Fine DND feriali (HH:MM)",
+          "weekend_dnd_start": "Inizio DND weekend (HH:MM)",
+          "weekend_dnd_end":   "Fine DND weekend (HH:MM)"
         }
       },
       "time_slots": {
         "title": "Fasce orarie",
-        "description": "Imposta l'orario di inizio e il volume TTS per ciascuna fascia oraria.",
+        "description": "Imposta l'orario di inizio e il volume TTS per ciascuna fascia oraria. Feriale e Weekend possono avere impostazioni diverse.",
         "data": {
-          "morning_start":    "Inizio mattina",
-          "morning_volume":   "Volume mattina",
-          "afternoon_start":  "Inizio pomeriggio",
-          "afternoon_volume": "Volume pomeriggio",
-          "evening_start":    "Inizio sera",
-          "evening_volume":   "Volume sera",
-          "night_start":      "Inizio notte",
-          "night_volume":     "Volume notte"
+          "weekday_morning_start":    "Feriale - Inizio mattina",
+          "weekday_morning_volume":   "Feriale - Volume mattina",
+          "weekday_afternoon_start":  "Feriale - Inizio pomeriggio",
+          "weekday_afternoon_volume": "Feriale - Volume pomeriggio",
+          "weekday_evening_start":    "Feriale - Inizio sera",
+          "weekday_evening_volume":   "Feriale - Volume sera",
+          "weekday_night_start":      "Feriale - Inizio notte",
+          "weekday_night_volume":     "Feriale - Volume notte",
+          "weekend_morning_start":    "Weekend - Inizio mattina",
+          "weekend_morning_volume":   "Weekend - Volume mattina",
+          "weekend_afternoon_start":  "Weekend - Inizio pomeriggio",
+          "weekend_afternoon_volume": "Weekend - Volume pomeriggio",
+          "weekend_evening_start":    "Weekend - Inizio sera",
+          "weekend_evening_volume":   "Weekend - Volume sera",
+          "weekend_night_start":      "Weekend - Inizio notte",
+          "weekend_night_volume":     "Weekend - Volume notte"
         }
       },
       "greetings": {

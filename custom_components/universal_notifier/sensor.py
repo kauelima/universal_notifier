@@ -1,13 +1,14 @@
 # /config/custom_components/universal_notifier/sensor.py
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.util import dt as dt_util
-from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.core import callback
-from .const import (
-    DOMAIN, CONF_TIME_SLOTS, CONF_PERSON_ENTITIES, CONF_CHANNELS,
-    CONF_IS_VOICE, CONF_DEFAULT_MEDIA_PLAYER, get_device_info,
-)
+from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.util import dt as dt_util
+
+from .const import (CONF_CHANNELS, CONF_DEFAULT_MEDIA_PLAYER, CONF_IS_VOICE,
+                    CONF_PERSON_ENTITIES, CONF_TIME_SLOTS, DOMAIN,
+                    get_device_info)
 from .utils import get_current_slot_info
+
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     conf = hass.data[DOMAIN][entry.entry_id]["conf"]
@@ -23,6 +24,7 @@ class UNotifierVolumeSensor(SensorEntity):
 
     def __init__(self, conf, entry):
         self._slots = conf.get(CONF_TIME_SLOTS, {})
+        self._weekend_days = conf.get("weekend_days", ["5", "6"])
         self._attr_unique_id = f"{DOMAIN}_{entry.entry_id}_volume"
         self._attr_native_unit_of_measurement = "%"
         self._attr_device_info = get_device_info(entry.entry_id)
@@ -30,8 +32,10 @@ class UNotifierVolumeSensor(SensorEntity):
     @property
     def native_value(self):
         """Volume calcolato in percentuale (0-100)."""
-        now_time = dt_util.now().time()
-        _, vol = get_current_slot_info(self._slots, now_time)
+        now = dt_util.now()
+        now_time = now.time()
+        now_weekday = now.weekday()
+        _, vol = get_current_slot_info(self._slots, now_time, now_weekday, self._weekend_days)
         return int(vol * 100)
 
     @property
@@ -48,8 +52,10 @@ class UNotifierVolumeSensor(SensorEntity):
 
     @property
     def extra_state_attributes(self):
-        now_time = dt_util.now().time()
-        slot_name, vol = get_current_slot_info(self._slots, now_time)
+        now = dt_util.now()
+        now_time = now.time()
+        now_weekday = now.weekday()
+        slot_name, vol = get_current_slot_info(self._slots, now_time, now_weekday, self._weekend_days)
         return {
             "current_slot": slot_name,
             "raw_volume": vol

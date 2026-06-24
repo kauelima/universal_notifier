@@ -34,13 +34,30 @@ DEFAULT_ASSISTANT_NAME  = ""
 DEFAULT_DATE_FORMAT     = "%H:%M:%S"
 DEFAULT_INCLUDE_TIME    = True
 DEFAULT_BOLD_PREFIX     = True
+DEFAULT_IGNORE_TITLE_VOICE = True
 DEFAULT_PRIORITY_VOLUME = 0.9
-DEFAULT_DND             = {"start": "23:00", "end": "06:00"}
-DEFAULT_TIME_SLOTS      = {
+DEFAULT_DND             = {
+    "weekday": {"start": "23:00", "end": "06:00"},
+    "weekend": {"start": "00:00", "end": "08:00"},
+}
+DEFAULT_WEEKEND_DAYS       = ["5", "6"]  # 0=Mon ... 6=Sun
+DEFAULT_TIME_SLOTS_WEEKDAY = {
     "morning":   {"start": "07:00", "volume": 0.35},
     "afternoon": {"start": "12:00", "volume": 0.40},
     "evening":   {"start": "19:00", "volume": 0.30},
-    "night":     {"start": "22:00", "volume": 0.10},
+    "night":     {"start": "21:30", "volume": 0.10},
+}
+DEFAULT_TIME_SLOTS_WEEKEND = {
+    "morning":   {"start": "08:00", "volume": 0.30},
+    "afternoon": {"start": "14:00", "volume": 0.40},
+    "evening":   {"start": "19:00", "volume": 0.30},
+    "night":     {"start": "22:30", "volume": 0.10},
+}
+
+# New nested default time_slots for config flow
+DEFAULT_TIME_SLOTS = {
+    "weekday": DEFAULT_TIME_SLOTS_WEEKDAY,
+    "weekend": DEFAULT_TIME_SLOTS_WEEKEND,
 }
 DEFAULT_GREETINGS = {
     "morning":   ["Buongiorno", "Ben alzato", "Salve", "Buondì"],
@@ -60,6 +77,21 @@ _BOOL          = BooleanSelector()
 _MULTILINE     = TextSelector(TextSelectorConfig(multiline=True))
 _PERSON_MULTI  = EntitySelector(EntitySelectorConfig(domain="person", multiple=True))
 _MEDIA_PLAYER  = EntitySelector(EntitySelectorConfig(domain="media_player", multiple=True))
+_WEEKDAY_MULTI = SelectSelector(
+    SelectSelectorConfig(
+        options=[
+            {"value": "0", "label": "Monday"},
+            {"value": "1", "label": "Tuesday"},
+            {"value": "2", "label": "Wednesday"},
+            {"value": "3", "label": "Thursday"},
+            {"value": "4", "label": "Friday"},
+            {"value": "5", "label": "Saturday"},
+            {"value": "6", "label": "Sunday"},
+        ],
+        multiple=True,
+        mode=SelectSelectorMode.DROPDOWN,
+    )
+)
 
 
 def _is_valid_time(value: str) -> bool:
@@ -87,38 +119,56 @@ def _text_to_greetings(user_input: dict) -> dict[str, list[str]]:
     }
 
 
-def _slots_to_fields(ts: dict) -> dict:
-    """Convert time_slots dict to flat form fields for pre-fill."""
+def _slots_to_fields(ts: dict, group: str = "weekday") -> dict:
+    """Convert one group of time_slots to flat form fields with prefix."""
+    # Handle old flat format (no weekday/weekend nesting)
+    if isinstance(ts, dict) and "weekday" not in ts and "weekend" not in ts:
+        group_data = ts
+    else:
+        group_data = ts.get(group, DEFAULT_TIME_SLOTS[group]) if isinstance(ts, dict) else ts
+    if not isinstance(group_data, dict):
+        group_data = DEFAULT_TIME_SLOTS[group]
     fields = {}
     for slot in SLOT_KEYS:
-        fields[f"{slot}_start"]  = ts.get(slot, DEFAULT_TIME_SLOTS[slot])["start"]
-        fields[f"{slot}_volume"] = ts.get(slot, DEFAULT_TIME_SLOTS[slot])["volume"]
+        slot_data = group_data.get(slot, DEFAULT_TIME_SLOTS[group][slot])
+        fields[f"{group}_{slot}_start"]  = slot_data["start"]
+        fields[f"{group}_{slot}_volume"] = slot_data["volume"]
     return fields
 
 
 def _fields_to_slots(user_input: dict) -> dict:
-    """Convert flat form fields back to time_slots dict."""
-    return {
-        slot: {
-            "start":  user_input[f"{slot}_start"],
-            "volume": float(user_input[f"{slot}_volume"]),
-        }
-        for slot in SLOT_KEYS
-    }
+    """Convert dual-group flat form fields back to nested time_slots dict."""
+    result = {}
+    for group in ("weekday", "weekend"):
+        result[group] = {}
+        for slot in SLOT_KEYS:
+            result[group][slot] = {
+                "start":  user_input[f"{group}_{slot}_start"],
+                "volume": float(user_input[f"{group}_{slot}_volume"]),
+            }
+    return result
+
+
+def _dual_time_slots_schema(defaults: dict, group: str) -> dict:
+    """Return a partial schema dict for one group (weekday/weekend)."""
+    d = _slots_to_fields(defaults, group)
+    result = {}
+    for slot in SLOT_KEYS:
+        result[vol.Optional(
+            f"{group}_{slot}_start", default=d[f"{group}_{slot}_start"]
+        )] = _TEXT
+        result[vol.Optional(
+            f"{group}_{slot}_volume", default=d[f"{group}_{slot}_volume"]
+        )] = _SLIDER_0_1
+    return result
 
 
 def _time_slots_schema(defaults: dict) -> vol.Schema:
-    d = _slots_to_fields(defaults)
-    return vol.Schema({
-        vol.Optional("morning_start",    default=d["morning_start"]):    _TEXT,
-        vol.Optional("morning_volume",   default=d["morning_volume"]):   _SLIDER_0_1,
-        vol.Optional("afternoon_start",  default=d["afternoon_start"]):  _TEXT,
-        vol.Optional("afternoon_volume", default=d["afternoon_volume"]): _SLIDER_0_1,
-        vol.Optional("evening_start",    default=d["evening_start"]):    _TEXT,
-        vol.Optional("evening_volume",   default=d["evening_volume"]):   _SLIDER_0_1,
-        vol.Optional("night_start",      default=d["night_start"]):      _TEXT,
-        vol.Optional("night_volume",     default=d["night_volume"]):     _SLIDER_0_1,
-    })
+    """Build the dual-group time_slots schema."""
+    schema_dict = {}
+    schema_dict.update(_dual_time_slots_schema(defaults, "weekday"))
+    schema_dict.update(_dual_time_slots_schema(defaults, "weekend"))
+    return vol.Schema(schema_dict)
 
 
 def _greetings_schema(defaults: dict) -> vol.Schema:
@@ -149,33 +199,48 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            dnd_start = user_input.get("dnd_start", "")
-            dnd_end   = user_input.get("dnd_end", "")
-            if not _is_valid_time(dnd_start):
-                errors["dnd_start"] = "invalid_time"
-            elif not _is_valid_time(dnd_end):
-                errors["dnd_end"] = "invalid_time"
+            wd_dnd_start  = user_input.get("weekday_dnd_start", "")
+            wd_dnd_end    = user_input.get("weekday_dnd_end", "")
+            we_dnd_start  = user_input.get("weekend_dnd_start", "")
+            we_dnd_end    = user_input.get("weekend_dnd_end", "")
+            if not _is_valid_time(wd_dnd_start):
+                errors["weekday_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(wd_dnd_end):
+                errors["weekday_dnd_end"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_start):
+                errors["weekend_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_end):
+                errors["weekend_dnd_end"] = "invalid_time"
             else:
                 self._data.update({
-                    "assistant_name":  user_input["assistant_name"],
-                    "date_format":     user_input["date_format"],
-                    "include_time":    user_input["include_time"],
-                    "bold_prefix":     user_input["bold_prefix"],
-                    "priority_volume": float(user_input["priority_volume"]),
-                    "person_entities": user_input.get("person_entities", []),
-                    "dnd": {"start": dnd_start, "end": dnd_end},
+                    "assistant_name":       user_input["assistant_name"],
+                    "date_format":          user_input["date_format"],
+                    "include_time":         user_input["include_time"],
+                    "bold_prefix":          user_input["bold_prefix"],
+                    "ignore_title_voice":   user_input["ignore_title_voice"],
+                    "priority_volume":      float(user_input["priority_volume"]),
+                    "person_entities":      user_input.get("person_entities", []),
+                    "weekend_days":         [int(d) if isinstance(d, str) else d for d in user_input.get("weekend_days", ["5", "6"])],
+                    "dnd": {
+                        "weekday": {"start": wd_dnd_start, "end": wd_dnd_end},
+                        "weekend": {"start": we_dnd_start, "end": we_dnd_end},
+                    },
                 })
                 return await self.async_step_time_slots()
 
         schema = vol.Schema({
-            vol.Optional("assistant_name",  default=DEFAULT_ASSISTANT_NAME):  _TEXT,
-            vol.Optional("date_format",     default=DEFAULT_DATE_FORMAT):     _TEXT,
-            vol.Optional("include_time",    default=DEFAULT_INCLUDE_TIME):    _BOOL,
-            vol.Optional("bold_prefix",     default=DEFAULT_BOLD_PREFIX):     _BOOL,
-            vol.Optional("priority_volume", default=DEFAULT_PRIORITY_VOLUME): _SLIDER_0_1,
-            vol.Optional("person_entities", default=[]):                      _PERSON_MULTI,
-            vol.Optional("dnd_start", default=DEFAULT_DND["start"]): _TEXT,
-            vol.Optional("dnd_end",   default=DEFAULT_DND["end"]):   _TEXT,
+            vol.Optional("assistant_name",    default=DEFAULT_ASSISTANT_NAME):      _TEXT,
+            vol.Optional("date_format",       default=DEFAULT_DATE_FORMAT):         _TEXT,
+            vol.Optional("include_time",      default=DEFAULT_INCLUDE_TIME):        _BOOL,
+            vol.Optional("bold_prefix",       default=DEFAULT_BOLD_PREFIX):         _BOOL,
+            vol.Optional("ignore_title_voice",default=DEFAULT_IGNORE_TITLE_VOICE):  _BOOL,
+            vol.Optional("priority_volume",   default=DEFAULT_PRIORITY_VOLUME):     _SLIDER_0_1,
+            vol.Optional("person_entities",   default=[]):                          _PERSON_MULTI,
+            vol.Optional("weekend_days",      default=DEFAULT_WEEKEND_DAYS):        _WEEKDAY_MULTI,
+            vol.Optional("weekday_dnd_start", default=DEFAULT_DND["weekday"]["start"]): _TEXT,
+            vol.Optional("weekday_dnd_end",   default=DEFAULT_DND["weekday"]["end"]):   _TEXT,
+            vol.Optional("weekend_dnd_start", default=DEFAULT_DND["weekend"]["start"]): _TEXT,
+            vol.Optional("weekend_dnd_end",   default=DEFAULT_DND["weekend"]["end"]):   _TEXT,
         })
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
@@ -186,11 +251,12 @@ class UniversalNotifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             valid = True
-            for slot in SLOT_KEYS:
-                t = user_input.get(f"{slot}_start", "")
-                if not _is_valid_time(t):
-                    errors[f"{slot}_start"] = "invalid_time"
-                    valid = False
+            for group in ("weekday", "weekend"):
+                for slot in SLOT_KEYS:
+                    t = user_input.get(f"{group}_{slot}_start", "")
+                    if not _is_valid_time(t):
+                        errors[f"{group}_{slot}_start"] = "invalid_time"
+                        valid = False
             if valid:
                 self._data["time_slots"] = _fields_to_slots(user_input)
                 return await self.async_step_greetings()
@@ -301,23 +367,27 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
     async def async_step_global_settings(self, user_input=None):
         if user_input is not None:
             self._current_options.update({
-                "assistant_name":  user_input["assistant_name"],
-                "date_format":     user_input["date_format"],
-                "include_time":    user_input["include_time"],
-                "bold_prefix":     user_input["bold_prefix"],
-                "priority_volume": float(user_input["priority_volume"]),
-                "person_entities": user_input.get("person_entities", []),
+                "assistant_name":       user_input["assistant_name"],
+                "date_format":          user_input["date_format"],
+                "include_time":         user_input["include_time"],
+                "bold_prefix":          user_input["bold_prefix"],
+                "ignore_title_voice":   user_input["ignore_title_voice"],
+                "priority_volume":      float(user_input["priority_volume"]),
+                "person_entities":      user_input.get("person_entities", []),
+                "weekend_days":         [int(d) if isinstance(d, str) else d for d in user_input.get("weekend_days", ["5", "6"])],
             })
             return self._save()
 
         eff = self._effective
         schema = vol.Schema({
-            vol.Optional("assistant_name",  default=eff.get("assistant_name",  DEFAULT_ASSISTANT_NAME)):  _TEXT,
-            vol.Optional("date_format",     default=eff.get("date_format",     DEFAULT_DATE_FORMAT)):     _TEXT,
-            vol.Optional("include_time",    default=eff.get("include_time",    DEFAULT_INCLUDE_TIME)):    _BOOL,
-            vol.Optional("bold_prefix",     default=eff.get("bold_prefix",     DEFAULT_BOLD_PREFIX)):     _BOOL,
-            vol.Optional("priority_volume", default=eff.get("priority_volume", DEFAULT_PRIORITY_VOLUME)): _SLIDER_0_1,
-            vol.Optional("person_entities", default=eff.get("person_entities", [])): _PERSON_MULTI,
+            vol.Optional("assistant_name",     default=eff.get("assistant_name",     DEFAULT_ASSISTANT_NAME)):      _TEXT,
+            vol.Optional("date_format",        default=eff.get("date_format",        DEFAULT_DATE_FORMAT)):         _TEXT,
+            vol.Optional("include_time",       default=eff.get("include_time",       DEFAULT_INCLUDE_TIME)):        _BOOL,
+            vol.Optional("bold_prefix",        default=eff.get("bold_prefix",        DEFAULT_BOLD_PREFIX)):         _BOOL,
+            vol.Optional("ignore_title_voice", default=eff.get("ignore_title_voice", DEFAULT_IGNORE_TITLE_VOICE)):  _BOOL,
+            vol.Optional("priority_volume",    default=eff.get("priority_volume",    DEFAULT_PRIORITY_VOLUME)):     _SLIDER_0_1,
+            vol.Optional("person_entities",    default=eff.get("person_entities",    [])):                          _PERSON_MULTI,
+            vol.Optional("weekend_days",       default=eff.get("weekend_days",       DEFAULT_WEEKEND_DAYS)):        _WEEKDAY_MULTI,
         })
         return self.async_show_form(step_id="global_settings", data_schema=schema)
 
@@ -327,20 +397,36 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
         errors = {}
 
         if user_input is not None:
-            dnd_start = user_input.get("dnd_start", "")
-            dnd_end   = user_input.get("dnd_end", "")
-            if not _is_valid_time(dnd_start):
-                errors["dnd_start"] = "invalid_time"
-            elif not _is_valid_time(dnd_end):
-                errors["dnd_end"] = "invalid_time"
+            wd_dnd_start  = user_input.get("weekday_dnd_start", "")
+            wd_dnd_end    = user_input.get("weekday_dnd_end", "")
+            we_dnd_start  = user_input.get("weekend_dnd_start", "")
+            we_dnd_end    = user_input.get("weekend_dnd_end", "")
+            if not _is_valid_time(wd_dnd_start):
+                errors["weekday_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(wd_dnd_end):
+                errors["weekday_dnd_end"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_start):
+                errors["weekend_dnd_start"] = "invalid_time"
+            elif not _is_valid_time(we_dnd_end):
+                errors["weekend_dnd_end"] = "invalid_time"
             else:
-                self._current_options["dnd"] = {"start": dnd_start, "end": dnd_end}
+                self._current_options["dnd"] = {
+                    "weekday": {"start": wd_dnd_start, "end": wd_dnd_end},
+                    "weekend": {"start": we_dnd_start, "end": we_dnd_end},
+                }
                 return self._save()
 
         dnd = self._effective.get("dnd", DEFAULT_DND)
+        # Retrocompat: flat format → nested
+        if "weekday" not in dnd and "start" in dnd:
+            dnd = {"weekday": dnd, "weekend": dnd}
+        wd = dnd.get("weekday", DEFAULT_DND["weekday"])
+        we = dnd.get("weekend", DEFAULT_DND["weekend"])
         schema = vol.Schema({
-            vol.Optional("dnd_start", default=dnd.get("start", DEFAULT_DND["start"])): _TEXT,
-            vol.Optional("dnd_end",   default=dnd.get("end",   DEFAULT_DND["end"])):   _TEXT,
+            vol.Optional("weekday_dnd_start", default=wd.get("start", DEFAULT_DND["weekday"]["start"])): _TEXT,
+            vol.Optional("weekday_dnd_end",   default=wd.get("end",   DEFAULT_DND["weekday"]["end"])):   _TEXT,
+            vol.Optional("weekend_dnd_start", default=we.get("start", DEFAULT_DND["weekend"]["start"])): _TEXT,
+            vol.Optional("weekend_dnd_end",   default=we.get("end",   DEFAULT_DND["weekend"]["end"])):   _TEXT,
         })
         return self.async_show_form(step_id="dnd", data_schema=schema, errors=errors)
 
@@ -351,11 +437,12 @@ class UniversalNotifierOptionsFlow(config_entries.OptionsFlow):
 
         if user_input is not None:
             valid = True
-            for slot in SLOT_KEYS:
-                t = user_input.get(f"{slot}_start", "")
-                if not _is_valid_time(t):
-                    errors[f"{slot}_start"] = "invalid_time"
-                    valid = False
+            for group in ("weekday", "weekend"):
+                for slot in SLOT_KEYS:
+                    t = user_input.get(f"{group}_{slot}_start", "")
+                    if not _is_valid_time(t):
+                        errors[f"{group}_{slot}_start"] = "invalid_time"
+                        valid = False
             if valid:
                 self._current_options["time_slots"] = _fields_to_slots(user_input)
                 return self._save()

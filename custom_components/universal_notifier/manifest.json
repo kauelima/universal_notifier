@@ -1,7 +1,9 @@
 {
     "domain": "universal_notifier",
     "name": "Universal Notifier",
-    "codeowners": ["@jumping2000"],
+    "codeowners": [
+        "@jumping2000"
+    ],
     "config_flow": true,
     "dependencies": [],
     "documentation": "https://github.com/jumping2000/universal_notifier",
@@ -10,5 +12,5 @@
     "issue_tracker": "https://github.com/jumping2000/universal_notifier/issues",
     "requirements": [],
     "single_config_entry": true,
-    "version": "0.7.0"
+    "version": "0.8.3"
 }

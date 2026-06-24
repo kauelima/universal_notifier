@@ -9,6 +9,7 @@ CONF_TIME_SLOTS = "time_slots"
 CONF_DND = "dnd"
 CONF_BOLD_PREFIX = "bold_prefix"
 CONF_INCLUDE_TIME = "include_time"
+CONF_IGNORE_TITLE_VOICE = "ignore_title_voice"
 CONF_PRIORITY_VOLUME = "priority_volume"
 CONF_PERSON_ENTITIES = "person_entities"
 
@@ -22,6 +23,10 @@ CONF_PRIORITY = "priority"
 CONF_SKIP_GREETING = "skip_greeting"
 CONF_OVERRIDE_GREETINGS = "override_greetings"
 
+# --- Entity IDs (auto-created by integration) ---
+ENTITY_LAST_MESSAGE = "last_message"
+ENTITY_DND_OVERRIDE = "dnd_override"
+
 # --- Chiavi Canale Singolo ---
 CONF_SERVICE = "service"
 CONF_TARGET = "target"
@@ -33,7 +38,7 @@ CONF_DEFAULT_MEDIA_PLAYER = "default_media_player"
 CONF_TYPE = "type"
 
 # --- Piattaforme HA ---
-PLATFORMS = ["sensor", "binary_sensor", "select", "number"]
+PLATFORMS = ["sensor", "binary_sensor", "select", "number", "text", "switch"]
 
 
 def get_device_info(entry_id: str):
