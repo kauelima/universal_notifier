@@ -4,20 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.8.2] - 2026-06-17
+## [0.8.3] - 2026-06-17 - PRODUCTION
+New version, see preproduction releases for new features
+
+## [0.8.2] - 2026-06-17 - PREPROD
 
 ### Fixed
 - **Volume sensor weekday/weekend slots**: The Volume sensor now correctly works. Previously the sensor always used the default path regardless of the day of the week.
 - **Telegram target normalization**: `CONF_TARGET` (chat_id) is now normalized once to `list[str]` regardless of input type (single value, list, comma-separated string, numeric). Eliminated redundant re-reads and inconsistent `int`/`str` conversions
 
-## [0.8.1] - 2026-06-14
+## [0.8.1] - 2026-06-14 - PREPROD
 
 ### Fixed
 - **Telegram parse modes**: MarkdownV2 bold: `**bold**` correctly converted to `*bold*` per Telegram spec. `plain_text` strips `**bold**`/`*italic*` markers instead of showing them literally. `parse_mode` removed from notify service `data` (unsupported by `mobile_app`).
 - **Volume resume when media player is idle**: When a media player is idle/off at notification time, the snapshot captures `volume_level=None`. Previously, the resume phase would try to restore `None`, producing a no-op. Now it falls back to the target volume used during the notification.
 - **Select entities persist across restarts**: `PriorityVolumeSelect`, `TextFormatSelect`, and `NotificationModeSelect` now use `RestoreEntity` to survive HA reboots.
 
-## [0.8.0] - 2026-06-13
+## [0.8.0] - 2026-06-13 - PREPROD
 
 ### Added
 - **Weekday/Weekend DND**: Do Not Disturb now supports separate schedules for weekdays and weekends, configurable independently in the UI.

@@ -2,15 +2,10 @@
 config/
 # Python
 __pycache__/
+.pytest_cache/
 # Copilot
 .github/copilot-instructions.md
-#devcontainer
-.devcontainer/
 #venv
 .venv/
-#.vscode
-.vscode/
 # md files
-COMPLETE_GUIDE.md
-OLD_README.md
-docs/superpowers/
+docs/

@@ -1,0 +1,39 @@
+{
+    "name": "Universal Notifier - HA Dev",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "homeassistant",
+    "workspaceFolder": "/workspace",
+    "shutdownAction": "stopCompose",
+    "forwardPorts": [
+        8123
+    ],
+    "portsAttributes": {
+        "8123": {
+            "label": "Home Assistant Web UI",
+            "onAutoForward": "notify"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "keesschollaart.vscode-home-assistant",
+                "GitHub.copilot",
+                "GitHub.copilot-chat",
+                "redhat.vscode-yaml"
+            ],
+            "settings": {
+                "editor.tabSize": 4,
+                "files.eol": "\n",
+                "python.defaultInterpreterPath": "/usr/local/bin/python3",
+                "yaml.customTags": [
+                    "!secret scalar",
+                    "!include_dir_named scalar",
+                    "!include_dir_list scalar"
+                ]
+            }
+        }
+    },
+    "postCreateCommand": "uv sync"
+}
