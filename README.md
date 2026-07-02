@@ -21,6 +21,8 @@ a new release from an appdaemon app by @caiosweet and @jumping2000
 ### Buy me a coffee and give me a star ✨!
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/jumping)
 
+[![Star History Chart](https://api.star-history.com/svg?repos=jumping2000/universal_notifier&type=Date)](https://star-history.com/#bytebase/star-history&Date)
+
 ___
 
 **Universal Notifier** is a custom Home Assistant component that centralizes and enhances notification management.
