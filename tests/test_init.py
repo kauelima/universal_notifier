@@ -269,6 +269,52 @@ class TestTitleAndPrefix:
             prefix_part = msg.split("]")[0]
             assert ":" not in prefix_part
 
+    @freeze_time("2026-06-17 10:00:00")
+    async def test_skip_assistant_name(
+        self, hass, _call_send, service_calls
+    ):
+        """skip_assistant_name=True should omit the name but keep the time prefix."""
+        await _call_send(
+            message="Body",
+            targets=["test_text"],
+            skip_assistant_name=True,
+        )
+        msg = service_calls[0]["data"].get("message", "")
+        assert "Assistant" not in msg  # configured name
+        assert msg.startswith("[")  # time-only prefix remains
+        assert ":" in msg.split("]")[0]
+
+    @freeze_time("2026-06-17 10:00:00")
+    async def test_skip_assistant_name_no_time_no_greeting(
+        self, hass, _call_send, service_calls
+    ):
+        """With name, time and greeting all skipped, message is just the raw body."""
+        await _call_send(
+            message="Body",
+            targets=["test_text"],
+            skip_assistant_name=True,
+            include_time=False,
+            skip_greeting=True,
+        )
+        msg = service_calls[0]["data"].get("message", "")
+        assert msg == "Body"
+
+    @freeze_time("2026-06-17 10:00:00")
+    async def test_skip_assistant_name_with_title(
+        self, hass, _call_send, service_calls
+    ):
+        """skip_assistant_name=True should omit the name from the title prefix too."""
+        await _call_send(
+            message="Body",
+            title="My Title",
+            targets=["test_text"],
+            skip_assistant_name=True,
+        )
+        data = service_calls[0]["data"]
+        title = data.get("title", "")
+        assert "Assistant" not in title
+        assert "My Title" in title
+
 
 # ============================================================================
 # Telegram routing
