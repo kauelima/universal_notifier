@@ -21,7 +21,8 @@ from .const import (  # Config keys; Service keys (Inputs); Inner Channel keys; 
     CONF_DEFAULT_MEDIA_PLAYER, CONF_DND, CONF_ENTITY_ID, CONF_GREETINGS,
     CONF_IGNORE_TITLE_VOICE, CONF_INCLUDE_TIME, CONF_IS_VOICE, CONF_MESSAGE,
     CONF_OVERRIDE_GREETINGS, CONF_PERSON_ENTITIES, CONF_PRIORITY,
-    CONF_PRIORITY_VOLUME, CONF_SERVICE, CONF_SKIP_GREETING, CONF_TARGET,
+    CONF_PRIORITY_VOLUME, CONF_SERVICE, CONF_SKIP_ASSISTANT_NAME,
+    CONF_SKIP_GREETING, CONF_TARGET,
     CONF_TARGET_DATA, CONF_TARGETS, CONF_TIME_SLOTS, CONF_TITLE, CONF_TYPE,
     DOMAIN, ENTITY_DND_OVERRIDE, ENTITY_LAST_MESSAGE, PLATFORMS)
 ####
@@ -119,6 +120,7 @@ SEND_SERVICE_SCHEMA = vol.Schema({
     vol.Optional(CONF_TARGET_DATA): dict,
     vol.Optional(CONF_PRIORITY): cv.boolean,
     vol.Optional(CONF_SKIP_GREETING): cv.boolean,
+    vol.Optional(CONF_SKIP_ASSISTANT_NAME): cv.boolean,
     vol.Optional(CONF_INCLUDE_TIME): cv.boolean,
     vol.Optional(CONF_PRIORITY_VOLUME): cv.string,
     vol.Optional(CONF_ASSISTANT_NAME): cv.string,
@@ -226,6 +228,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         targets = call.data.get(CONF_TARGETS, [])
         override_name = call.data.get(CONF_ASSISTANT_NAME, global_name)
         skip_greeting = call.data.get(CONF_SKIP_GREETING, False)
+        skip_assistant_name = call.data.get(CONF_SKIP_ASSISTANT_NAME, False)
         include_time = call.data.get(CONF_INCLUDE_TIME, global_include_time)
         # priority_volume: prima controlla override runtime (select entity), poi call data, poi config
         runtime_pv = hass.data[DOMAIN][entry.entry_id].get("runtime_priority_vol")
@@ -365,16 +368,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         clean_name = apply_formatting(clean_name, parse_mode, "bold")
                         clean_time = apply_formatting(clean_time, parse_mode, "bold")
                         clean_orig_title = apply_formatting(clean_orig_title, parse_mode, "bold")
-                    prefix_content = clean_name
+                    prefix_parts = []
+                    if clean_name and not skip_assistant_name:
+                        prefix_parts.append(clean_name)
                     if clean_time:
-                        prefix_content += f" - {clean_time}"
-                    clean_prefix = f"[{prefix_content}]"
+                        prefix_parts.append(clean_time)
+                    clean_prefix = f"[{' - '.join(prefix_parts)}]" if prefix_parts else ""
                     greeting_part = f"{clean_greet}. " if clean_greet else ""
                     if clean_orig_title:
-                        final_title = f"{clean_prefix} {clean_orig_title}"
+                        final_title = f"{clean_prefix} {clean_orig_title}" if clean_prefix else clean_orig_title
                         final_msg = f"{greeting_part}{clean_msg}"
                     else:
-                        final_msg = f"{clean_prefix} {greeting_part}{clean_msg}"
+                        final_msg = f"{clean_prefix} {greeting_part}{clean_msg}" if clean_prefix else f"{greeting_part}{clean_msg}"
 
             # Escape MarkdownV2 special chars for Telegram
             if not is_voice_channel and parse_mode == "markdownv2":

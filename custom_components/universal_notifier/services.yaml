@@ -96,6 +96,13 @@ send:
       selector:
         boolean:
 
+    skip_assistant_name:
+      name: Skip Assistant Name
+      description: If active, omits the assistant name from the visual prefix (e.g., "[Home Assistant - 10:00]" becomes "[10:00]", or no prefix if time is also disabled).
+      required: false
+      selector:
+        boolean:
+
     include_time:
       name: Include Time
       description: If disabled, omits the time in the visual prefix.

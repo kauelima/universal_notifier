@@ -21,6 +21,7 @@ CONF_DATA = "data"
 CONF_TARGET_DATA = "target_data"
 CONF_PRIORITY = "priority"
 CONF_SKIP_GREETING = "skip_greeting"
+CONF_SKIP_ASSISTANT_NAME = "skip_assistant_name"
 CONF_OVERRIDE_GREETINGS = "override_greetings"
 
 # --- Entity IDs (auto-created by integration) ---
