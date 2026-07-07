@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- **Skip Assistant Name flag**: New optional `skip_assistant_name` boolean in the `universal_notifier.send` service. When true, the assistant name is omitted from the visual prefix (`[Home Assistant - 10:00]` becomes `[10:00]`). Combined with `include_time: false` and `skip_greeting: true`, notifications are delivered as the raw message with no prefix at all. Also fixes the stray `[ - 10:00]` prefix shown when the configured assistant name was empty.
+
 ## [0.8.3] - 2026-06-17 - PRODUCTION
 New version, see preproduction releases for new features
 

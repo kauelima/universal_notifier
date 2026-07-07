@@ -168,6 +168,7 @@ Dopo la configurazione iniziale, vai in **Impostazioni > Dispositivi e servizi >
 |target_data|dict|No|Dizionario {alias_target: {dati_specifici}} per override mirati.|
 |priority|bool|No|Se true, ignora il DND e imposta volume alto (default 0.9).|
 |skip_greeting|bool|No|Se true, non aggiunge il saluto basato sull'ora (es. Buongiorno).|
+|skip_assistant_name|bool|No|Se true, omette il nome dell'assistente dal prefisso visivo.|
 |include_time|bool|No|Sovrascrive la configurazione per includere/escludere l'ora nel prefisso visivo.|
 |ignore_title_voice|bool|No|Se true, ignora il titolo per le notifiche vocali (TTS/canali voice).|
 |bold_prefix|bool|No|Sovrascrive la configurazione per mettere in grassetto nome assistente e ora.|

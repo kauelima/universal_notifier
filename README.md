@@ -174,6 +174,7 @@ After initial setup, go to **Settings > Devices & Services > Universal Notifier 
 |target_data|dict|No|Dictionary {target_alias: {specific_data}} for targeted overrides.|
 |priority|bool|No|If true, bypasses DND and sets high volume (default 0.9).|
 |skip_greeting|bool|No|If true, does not add the time-based greeting (e.g., Good Morning).|
+|skip_assistant_name|bool|No|If true, omits the assistant name from the visual prefix.|
 |include_time|bool|No|Overrides the configuration to include/exclude the time in the visual prefix.|
 |ignore_title_voice|bool|No|If true, ignores the title for voice notifications (TTS/notify voice channels).|
 |bold_prefix|bool|No|Overrides the configuration to have assistant name and time in bold|
